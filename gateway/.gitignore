@@ -1,0 +1,16 @@
+bcast_daemon
+mcast_daemon
+init_smartgateway
+clientLogin.cgi
+modifyPassword.cgi
+modifyAlias.cgi
+cloudProxyHttpModule
+clientadmin_daemon
+/testLockwrite.c
+/testLock
+/testLockread
+/testLockread.c
+/testLockwrite
+/locktest.c
+/cJSONtest.c
+/cgictest.c
