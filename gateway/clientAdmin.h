@@ -67,7 +67,8 @@ typedef enum {
 	clientAdminPushToCloudPasswdSame,
 	clientAdminPushToCloudOldAliasNotExist,
 	clientAdminPushToCloudNewAliasExist,
-	clientAdminPushToCloudAliasSame
+	clientAdminPushToCloudAliasSame,
+	clientAdminPushToCBDaemonErr    //add yan150211
 } clientAdminResultType;
 
 // push to cloud response status
