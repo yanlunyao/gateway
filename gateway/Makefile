@@ -2,7 +2,8 @@ include ../Make.defines
 
 PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		clientLogin.cgi modifyPassword.cgi modifyAlias.cgi \
-		cloudProxyHttpModule clientadmin_daemon
+		cloudProxyHttpModule clientadmin_daemon \
+		siftCallback_daemon
 
 all:	${PROGS}
 
@@ -37,6 +38,10 @@ cloudProxyHttpModule:	cloudProxyHttpModule.o cJSON.o
 #clientadmin_daemon
 clientadmin_daemon:	clientadmin_daemon.o cJSON.o lockreg.o
 		${CC} ${CFLAGS} -o $@ clientadmin_daemon.o cJSON.o lockreg.o ${LIBS} -lm
+
+#siftCallback_daemon
+siftCallback_daemon:	siftCallback_daemon.o cJSON.o
+		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o ${LIBS} -lm
 
 clean:
 		rm -f ${PROGS} ${CLEANFILES}

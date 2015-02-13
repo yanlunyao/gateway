@@ -35,6 +35,12 @@
 #define FEATURE_GDGL_CPROXY_HTTPMODULE_PORT_STR "5014"
 #define FEATURE_GDGL_CPROXY_CA_LISTEN_PORT 5016
 #define FEATURE_GDGL_CPROXY_CA_LISTEN_PORT_STR "5016"
+#define FEATURE_GDGL_CPROXY_CB_PUSH_PORT 5020 //test  debug
+#define FEATURE_GDGL_CPROXY_CB_PUSH_PORT_STR "5020" //test debug
+#define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT 5021 //test debug
+#define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT_STR "5021" //test debug
+#define FEATURE_GDGL_CPROXY_CALLBACK_PORT 5019  //test debug
+#define FEATURE_GDGL_CPROXY_CALLBACK_PORT_STR "5018" //test debug
 
 
 
@@ -57,6 +63,10 @@
 #define MSG_W 0200
 #define	SVMSG_MODE	(MSG_R | MSG_W | MSG_R>>3 | MSG_R>>6)
 #define CLIENTADMIN_MSG_LEN 256
+
+//siftCallback_daemon
+#define SIFTCALLBACK_MQ_KEY	1235L
+
 
 typedef enum {
     clientAdmintMsgPassword = 1,
