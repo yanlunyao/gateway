@@ -657,20 +657,21 @@ static int push_to_CBDaemon(char *send_text, int send_size)
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(FEATURE_GDGL_CPROXY_CB_PUSH_PORT);
-	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servaddr.sin_addr.s_addr = inet_addr(LOCALHOST_TEST); //debug yan
 
 	if ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
 		CA_DEBUG("%d connect error\n", mt);
 		close(fd);
 		return -1;
 	}
-
+	//sleep(1); //debug yan
     if ( writen(fd, send_text, send_size) != send_size ) {
 		CA_DEBUG("%d write error\n", mt);
 		close(fd);
 		return -1;
     }
 
+    //sleep(3); //debug yan
 	close(fd);
 
 	return 0;
@@ -803,7 +804,7 @@ int modify_password(cgiFormResultType cgi_result, const char * old_passwd_str, c
 	else if (res > 0) {
 		close(fd_passwd);
 		return res;
-	}
+	}  //debug yan
 	
 	// Push to CB_Daemon  //add yanly150211
 	// generate push string //debug
@@ -1103,7 +1104,7 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 	else if (res > 0) {
 		close(fd_alias);
 		return res;
-	}
+	} //debug yan
 	
 	// Push to CB_Daemon
 	// generate push string  //debug

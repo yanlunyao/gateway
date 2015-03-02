@@ -40,8 +40,8 @@ clientadmin_daemon:	clientadmin_daemon.o cJSON.o lockreg.o
 		${CC} ${CFLAGS} -o $@ clientadmin_daemon.o cJSON.o lockreg.o ${LIBS} -lm
 
 #siftCallback_daemon
-siftCallback_daemon:	siftCallback_daemon.o cJSON.o
-		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o ${LIBS} -lm
+siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
+		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
 
 clean:
 		rm -f ${PROGS} ${CLEANFILES}
