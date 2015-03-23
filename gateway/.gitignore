@@ -14,3 +14,6 @@ clientadmin_daemon
 /locktest.c
 /cJSONtest.c
 /cgictest.c
+/timedaction.h
+/language.settings.xml
+/siftCallback_daemon.c
