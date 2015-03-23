@@ -170,8 +170,8 @@ again:
 			response_json = cJSON_Parse(response_json_str);
 			if (!response_json) 
 			{
-				//GDGL_DEBUG("child %ld response_json parse Error before: (%s)\n", (long)c_pid, cJSON_GetErrorPtr());
-				GDGL_DEBUG("child %ld response_json parse Error 111\n", (long)c_pid);
+				GDGL_DEBUG("child %ld response_json parse Error before: (%s)\n", (long)c_pid, cJSON_GetErrorPtr());
+				//GDGL_DEBUG("child %ld response_json parse Error 111\n", (long)c_pid);
 				nwrite = child_response(CLOUD_PROXY_HTTP_RESPONSE_RES_JSON_PARSE_FAILED, NULL, response);
 			}
 			else

@@ -68,6 +68,7 @@ extern cJSON *cJSON_Parse(const char *value);
 extern char  *cJSON_Print(cJSON *item);
 /* Render a cJSON entity to text for transfer/storage without any formatting. Free the char* when finished. */
 extern char  *cJSON_PrintUnformatted(cJSON *item);
+extern char  *cJSON_PrintRawString(cJSON *item);  //this is user-defined by gdgl
 /* Delete a cJSON entity and all subentities. */
 extern void   cJSON_Delete(cJSON *c);
 

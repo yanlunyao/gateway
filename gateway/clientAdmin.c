@@ -27,6 +27,7 @@
 #include <sys/msg.h>
 #include "smartgateway.h"
 #include "clientAdmin.h"
+#include "glCalkProtocol.h"
 
 static int construct_msg(clientAdminMsgType msgtype, const char *text_str, struct client_admin_msgbuf *pmsg);
 
@@ -645,7 +646,7 @@ static int push_to_cloud(modifyType mt, const char *action_str, const char *old_
 *	  	  -1>>push error,socket send error
 * Others:  none
 */
-static int push_to_CBDaemon(char *send_text, int send_size)
+static int push_to_CBDaemon(const char *send_text, int send_size)
 {
 	int fd;
 	struct sockaddr_in	servaddr;
@@ -657,7 +658,12 @@ static int push_to_CBDaemon(char *send_text, int send_size)
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(FEATURE_GDGL_CPROXY_CB_PUSH_PORT);
-	servaddr.sin_addr.s_addr = inet_addr(LOCALHOST_TEST); //debug yan
+
+	if ( (inet_pton(AF_INET, LOCALHOST_TEST, &servaddr.sin_addr)) <= 0) {
+		CA_DEBUG("%d inet_pton error:%d\n", mt, re);
+		close(fd);
+		return -2;
+	}
 
 	if ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
 		CA_DEBUG("%d connect error\n", mt);
@@ -676,75 +682,6 @@ static int push_to_CBDaemon(char *send_text, int send_size)
 
 	return 0;
 }
-/*
- * Function: generate_push_to_CB_string_alias
- * Input:  old_alias_str,new_alias_str
- * Output: string
- * Return: success: string size
- * 		   error: <0
- * Others: none
-*/
-static int generate_push_to_CB_string_alias(char *string, const char *old_alias_str,const char *new_alias_str)
-{
-    cJSON *send_json;
-    char *json_send_out;
-    int nwrite;
-
-    send_json = cJSON_CreateObject();
-	if (!send_json) {
-		CA_DEBUG("create send_json failed\n");
-		return -1;
-	}
-	cJSON_AddNumberToObject(send_json, "msgtype", 10000);
-	cJSON_AddStringToObject(send_json, "old_alias", old_alias_str);
-	cJSON_AddStringToObject(send_json, "new_alias", new_alias_str);
-
-    if((json_send_out = cJSON_PrintUnformatted(send_json)) == 0 ){
-		cJSON_Delete(send_json);
-		return -1;
-    }
-
-    cJSON_Delete(send_json);
-    nwrite = snprintf(string, PUSH_TO_CB_DAEMON_MAX_LEN, "%s", json_send_out);
-	nwrite += 1; // including the terminated null
-    free(json_send_out);
-    return nwrite;
-}
-/*
- * Function: generate_push_to_CB_string_psw
- * Input:  old_alias_str,new_alias_str
- * Output: string
- * Return: success: string size
- * 		   error: <0
- * Others: none
-*/
-static int generate_push_to_CB_string_psw(char *string, const char *old_str,const char *new_str)
-{
-    cJSON *send_json;
-    char *json_send_out;
-    int nwrite;
-
-    send_json = cJSON_CreateObject();
-	if (!send_json) {
-		CA_DEBUG("create send_json failed\n");
-		return -1;
-	}
-	cJSON_AddNumberToObject(send_json, "msgtype", 10001);
-	cJSON_AddStringToObject(send_json, "old_password", old_str);
-	cJSON_AddStringToObject(send_json, "new_password", new_str);
-
-    if((json_send_out = cJSON_PrintUnformatted(send_json)) == 0 ){
-		cJSON_Delete(send_json);
-		return -1;
-    }
-
-    cJSON_Delete(send_json);
-    nwrite = snprintf(string, PUSH_TO_CB_DAEMON_MAX_LEN, "%s", json_send_out);
-	nwrite += 1; // including the terminated null
-    free(json_send_out);
-    return nwrite;
-}
-
 //end add by yanly
 /***************************************************************************
   Function: modify_password
@@ -764,9 +701,7 @@ int modify_password(cgiFormResultType cgi_result, const char * old_passwd_str, c
 	int len, tries = 5;
 	int mqid;
 	struct client_admin_msgbuf mesg;
-	int send_cb_len;
-	char send_cb_string[PUSH_TO_CB_DAEMON_MAX_LEN];
-	
+
     fd_passwd = open(FEATURE_GDGL_PASSWD_PATH, O_RDWR, 0777);
 	if (fd_passwd < 0) {
 		return clientAdminPasswdFileOpenErr;
@@ -806,17 +741,6 @@ int modify_password(cgiFormResultType cgi_result, const char * old_passwd_str, c
 		return res;
 	}  //debug yan
 	
-	// Push to CB_Daemon  //add yanly150211
-	// generate push string //debug
-	if( (send_cb_len = generate_push_to_CB_string_psw(send_cb_string, old_passwd_str, new_passwd_str)) <0) {
-		return clientAdminPushToCBDaemonErr;
-	}
-	//if push failed, return push error
-	if ( (res = push_to_CBDaemon(send_cb_string, send_cb_len)) < 0 ) {
-		close(fd_passwd);
-		return clientAdminPushToCBDaemonErr;
-	}
-
 	// Write new password
 	len = strlen(new_passwd_str);
 	while (tries > 0) {
@@ -952,7 +876,7 @@ int check_new_alias(cgiFormResultType cgi_result, const char * new_alias_str)
 
 /***************************************************************************
   Function: modify_alias
-  Description: read old alias and check, write new alias to alias.conf & push to cloud server &push to CB_Daemon
+  Description: read old alias and check, write new alias to alias.conf & push to cloud server
   Input: cgi_result, the return value of cgiFormString
             old_alias_str, null terminated, not check yet
             new_alias_str, null terminated, already check
@@ -960,101 +884,6 @@ int check_new_alias(cgiFormResultType cgi_result, const char * new_alias_str)
   Return: 0 OK, other Error
   Others:  none
 ***************************************************************************/
-//origin:
-//int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const char * new_alias_str)
-//{
-//    int fd_alias;
-//	char gateway_alias[FEATURE_GDGL_ACCOUNT_MAX_LEN + 1];
-//	int res;
-//	int len, tries = 5;
-//	int mqid;
-//	struct client_admin_msgbuf mesg;
-//
-//    fd_alias = open(FEATURE_GDGL_ALIAS_PATH, O_RDWR, 0777);
-//	if (fd_alias < 0) {
-//		return clientAdminAliasFileOpenErr;
-//	}
-//	res = write_lock(fd_alias, 0, SEEK_SET, 0);
-//	if (res == -1) {
-//		close(fd_alias);
-//		return clientAdminAliasFileLockErr;
-//	}
-//	// Read old alias
-//	res = read(fd_alias, gateway_alias, FEATURE_GDGL_ACCOUNT_MAX_LEN);
-//	if (res < 0) {
-//		close(fd_alias);
-//		return clientAdminAliasFileReadErr;
-//	}
-//	gateway_alias[res] = '\0';
-//    // Check old alias
-//	res = check_alias(cgi_result, old_alias_str, gateway_alias);
-//	if (res != 0) {
-//		close(fd_alias);
-//		return res;
-//	}
-//	// Check if old == new
-//	if (strcmp(old_alias_str, new_alias_str) == 0) {
-//		close(fd_alias);
-//		return clientAdminTwoAliasEqualErr;
-//	}
-//
-//	// Push to cloud
-//	//if push failed, return push error
-//	if ( (res = push_to_cloud(modifyAliasType, "modifyalias", old_alias_str, new_alias_str)) < 0 ) {
-//		close(fd_alias);
-//		return clientAdminPushToCloudErr;
-//	}
-//	else if (res > 0) {
-//		close(fd_alias);
-//		return res;
-//	}
-//
-//	// Write new alias
-//	len = strlen(new_alias_str);
-//	while (tries > 0) {
-//		// seek to beginning of file
-//		res = lseek(fd_alias, 0, SEEK_SET);
-//		if (res < 0) {
-//		    close(fd_alias);
-//		    return clientAdminAliasFileSeekErr;
-//	    }
-//		// truncate the file to 0 byte
-//	    res = ftruncate(fd_alias, 0);
-//	    if (res < 0) {
-//		    close(fd_alias);
-//		    return clientAdminAliasFileTruncErr;
-//	    }
-//	    res = writen(fd_alias, new_alias_str, len);
-//	    if (res != len) {
-//			tries--;
-//	    }
-//		else {
-//			break;
-//		}
-//	}
-//	if (tries == 0) {
-//	    close(fd_alias);
-//		return clientAdminAliasFileWriteErr;
-//	}
-//
-//	close(fd_alias); //also unlock
-//
-//	// Send IPC msg
-//	mqid = msgget(CLIENTADMIN_MQ_KEY, 0);
-//	if (mqid == -1) {
-//		CA_DEBUG("msgget error %d:%s\n", mqid, strerror(errno));
-//	}
-//	else {
-//		len = construct_msg(clientAdmintMsgAlias, new_alias_str, &mesg);
-//		if (len > 0) {
-//			res = msgsnd(mqid, &mesg, len, 0);
-//			if (res == -1) {
-//				CA_DEBUG("msgsnd error %s\n", strerror(errno));
-//			}
-//		}
-//	}
-//	return 0;
-//}
 int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const char * new_alias_str)
 {
     int fd_alias;
@@ -1063,9 +892,6 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 	int len, tries = 5;
 	int mqid;
 	struct client_admin_msgbuf mesg;
-	
-	int send_cb_len;
-	char send_cb_string[PUSH_TO_CB_DAEMON_MAX_LEN];
 
     fd_alias = open(FEATURE_GDGL_ALIAS_PATH, O_RDWR, 0777);
 	if (fd_alias < 0) {
@@ -1094,7 +920,7 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 		close(fd_alias);
 		return clientAdminTwoAliasEqualErr;
 	}
-		
+
 	// Push to cloud
 	//if push failed, return push error
 	if ( (res = push_to_cloud(modifyAliasType, "modifyalias", old_alias_str, new_alias_str)) < 0 ) {
@@ -1104,17 +930,6 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 	else if (res > 0) {
 		close(fd_alias);
 		return res;
-	} //debug yan
-	
-	// Push to CB_Daemon
-	// generate push string  //debug
-	if( (send_cb_len = generate_push_to_CB_string_alias(send_cb_string, old_alias_str, new_alias_str)) <0) {
-		return clientAdminPushToCBDaemonErr;
-	}
-	//if push failed, return push error
-	if ( (res = push_to_CBDaemon(send_cb_string, send_cb_len)) < 0 ) {
-		close(fd_alias);
-		return clientAdminPushToCBDaemonErr;
 	}
 
 	// Write new alias
@@ -1134,7 +949,7 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 	    }
 	    res = writen(fd_alias, new_alias_str, len);
 	    if (res != len) {
-			tries--;		    
+			tries--;
 	    }
 		else {
 			break;
@@ -1144,7 +959,7 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 	    close(fd_alias);
 		return clientAdminAliasFileWriteErr;
 	}
-	
+
 	close(fd_alias); //also unlock
 
 	// Send IPC msg
@@ -1159,11 +974,10 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 			if (res == -1) {
 				CA_DEBUG("msgsnd error %s\n", strerror(errno));
 			}
-		}		
+		}
 	}
 	return 0;
 }
-
 /***************************************************************************
   Function: construct_msg
   Description: construct IPC message
@@ -1218,3 +1032,49 @@ static int construct_msg(clientAdminMsgType msgtype, const char *text_str, struc
 
 	return (re+1); //including null
 }
+/*
+ * Function: mAliasPustToCb
+ * return: success>>0,error>>error flag
+ * description: none
+*/
+int mAliasPushToCb(int status)
+{
+	char send_cb_string[GL_CALLBACK_MAX_SIZE];
+	int send_cb_len;
+
+	status = status*(-1);
+	// Push to CB_Daemon
+	// generate push string
+	if( (send_cb_len = cJsonAlias_callback(send_cb_string, status)) <0) {
+		return clientAdminPushToCBDaemonErr;
+	}
+	//if push failed, return push error
+	if ( (push_to_CBDaemon(send_cb_string, send_cb_len)) < 0 ) {
+		return clientAdminPushToCBDaemonErr;
+	}
+	return 0;
+}
+/*
+ * Function: mPswPushToCb
+ * return: success>>0,error>>error flag
+ * description: none
+*/
+int mPswPushToCb(int status)
+{
+	char send_cb_string[GL_CALLBACK_MAX_SIZE];
+	int send_cb_len;
+
+	status = status*(-1);
+	// Push to CB_Daemon
+	// generate push string
+	if( (send_cb_len = cJsonPsw_callback(send_cb_string, status)) <0) {
+		return clientAdminPushToCBDaemonErr;
+	}
+	//if push failed, return push error
+	if ( (push_to_CBDaemon(send_cb_string, send_cb_len)) < 0 ) {
+		return clientAdminPushToCBDaemonErr;
+	}
+	return 0;
+}
+
+

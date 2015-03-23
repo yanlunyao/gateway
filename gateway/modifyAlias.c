@@ -47,6 +47,7 @@ int cgiMain()
     res = read_id(gateway_id);
 	if (res != 0) {
 		client_admin_response("noid", res, clientAdminResultStr[res]);
+		mAliasPushToCb(res);
 		return res;
 	}
 
@@ -55,6 +56,7 @@ int cgiMain()
 	res = check_id(cgi_re, id, gateway_id);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mAliasPushToCb(res);
 		return res;
 	}
 
@@ -62,6 +64,7 @@ int cgiMain()
 	res = read_password(gateway_passwd);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mAliasPushToCb(res);
 		return res;
 	}
 
@@ -70,6 +73,7 @@ int cgiMain()
 	res = check_password(cgi_re, password, gateway_passwd);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mAliasPushToCb(res);
 		return res;
 	}
 
@@ -78,6 +82,7 @@ int cgiMain()
 	res = check_new_alias(cgi_re, new_alias);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mAliasPushToCb(res);
 		return res;
 	}
 
@@ -86,9 +91,16 @@ int cgiMain()
 	res = modify_alias(cgi_re, old_alias, new_alias);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mAliasPushToCb(res);
 		return res;
 	}
 	
+	res = mAliasPushToCb(0);
+	if(res !=0){
+		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		return res;
+	}
+
     // all right	
     client_admin_response(gateway_id, clientAdminSuccess, clientAdminResultStr[clientAdminSuccess]);
 	return 0;

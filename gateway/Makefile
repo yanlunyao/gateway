@@ -3,12 +3,13 @@ include ../Make.defines
 PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		clientLogin.cgi modifyPassword.cgi modifyAlias.cgi \
 		cloudProxyHttpModule clientadmin_daemon \
-		siftCallback_daemon
+		siftCallback_daemon \
+		net_stat bind_daemon
 
 all:	${PROGS}
 
 # Broadcast
-bcast_daemon:	bcast_daemon.o cJSON.o lockreg.o
+bcast_daemon:	bcast_daemon.o cJSON.o lockreg.o 
 		${CC} ${CFLAGS} -o $@ bcast_daemon.o cJSON.o lockreg.o ${LIBS} -lm
 
 # Multicast
@@ -20,28 +21,38 @@ init_smartgateway:	init_smartgateway.o lockreg.o
 		${CC} ${CFLAGS} -o $@ init_smartgateway.o lockreg.o ${LIBS}
 
 # Client login
-clientLogin.cgi:	clientLogin.o clientAdmin.o cgic.o cJSON.o lockreg.o
-		${CC} ${CFLAGS} -o $@ clientLogin.o clientAdmin.o cgic.o cJSON.o lockreg.o ${LIBS} -lm
+clientLogin.cgi:	clientLogin.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ clientLogin.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProtocol.o ${LIBS} -lm
 
 # Modify password
-modifyPassword.cgi:	modifyPassword.o clientAdmin.o cgic.o cJSON.o lockreg.o
-		${CC} ${CFLAGS} -o $@ modifyPassword.o clientAdmin.o cgic.o cJSON.o lockreg.o ${LIBS} -lm
+modifyPassword.cgi:	modifyPassword.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ modifyPassword.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProtocol.o ${LIBS} -lm
 
 # Modify alias
-modifyAlias.cgi:	modifyAlias.o clientAdmin.o cgic.o cJSON.o lockreg.o
-		${CC} ${CFLAGS} -o $@ modifyAlias.o clientAdmin.o cgic.o cJSON.o lockreg.o ${LIBS} -lm
+modifyAlias.cgi:	modifyAlias.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ modifyAlias.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProtocol.o ${LIBS} -lm
 
 #cloudProxyHttpModule
 cloudProxyHttpModule:	cloudProxyHttpModule.o cJSON.o
 		${CC} ${CFLAGS} -o $@ cloudProxyHttpModule.o cJSON.o ${LIBS} -lm -lcurl
 
 #clientadmin_daemon
-clientadmin_daemon:	clientadmin_daemon.o cJSON.o lockreg.o
-		${CC} ${CFLAGS} -o $@ clientadmin_daemon.o cJSON.o lockreg.o ${LIBS} -lm
+clientadmin_daemon:	clientadmin_daemon.o cJSON.o lockreg.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ clientadmin_daemon.o cJSON.o lockreg.o glCalkProtocol.o ${LIBS} -lm
+
+#net_stat
+net_stat: net_stat.o
+		${CC} ${CFLAGS} -o $@ net_stat.o 
+
+#bind_daemon
+bind_daemon: bind_daemon.o cJSON.o 
+		${CC} ${CFLAGS} -o $@ bind_daemon.o cJSON.o ${LIBS} -lm
 
 #siftCallback_daemon
 siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
 
 clean:
-		rm -f ${PROGS} ${CLEANFILES}
+		rm -f ${PROGS} ${CLEANFILES} *.o
+		
+		

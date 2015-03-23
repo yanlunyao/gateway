@@ -283,6 +283,22 @@ cJSON *cJSON_Parse(const char *value) {return cJSON_ParseWithOpts(value,0,0);}
 char *cJSON_Print(cJSON *item)				{return print_value(item,0,1);}
 char *cJSON_PrintUnformatted(cJSON *item)	{return print_value(item,0,0);}
 
+char *cJSON_PrintRawString(cJSON *item)
+{
+	if (!item) return 0;
+	if (!item->valuestring)
+	{
+		return cJSON_strdup("");
+	}
+	else
+	{
+		size_t len = strlen(item->valuestring);
+		char* out = (char*)calloc(sizeof(char), len + 1);
+		memcpy(out, item->valuestring, len);
+		return out;
+	}
+}
+
 /* Parser core - when encountering text, process appropriately. */
 static const char *parse_value(cJSON *item,const char *value)
 {

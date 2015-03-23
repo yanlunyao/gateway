@@ -43,6 +43,7 @@ int cgiMain()
     res = read_id(gateway_id);
 	if (res != 0) {
 		client_admin_response("noid", res, clientAdminResultStr[res]);
+		mPswPushToCb(res);
 		return res;
 	}
 	
@@ -50,6 +51,7 @@ int cgiMain()
 	res = read_alias(gateway_alias);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mPswPushToCb(res);
 		return res;
 	}
 
@@ -58,6 +60,7 @@ int cgiMain()
 	res = check_account(cgi_re, account, gateway_id, gateway_alias);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mPswPushToCb(res);
 		return res;
 	}
 
@@ -66,6 +69,7 @@ int cgiMain()
 	res = check_new_password(cgi_re, new_password);
 	if (res != 0) {
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mPswPushToCb(res);
 		return res;
 	}
 
@@ -73,6 +77,14 @@ int cgiMain()
 	cgi_re = cgiFormString("old_password", old_password, FEATURE_GDGL_PASSWD_MAX_LEN + 1);
 	res = modify_password(cgi_re, old_password, new_password);
 	if (res != 0) {
+		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
+		mPswPushToCb(res);
+		return res;
+	}
+
+	//pust to cb daemon
+	res = mPswPushToCb(0);
+	if(res !=0){
 		client_admin_response(gateway_id, res, clientAdminResultStr[res]);
 		return res;
 	}

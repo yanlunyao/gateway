@@ -103,7 +103,8 @@ int modify_password(cgiFormResultType cgi_result, const char * old_passwd_str, c
 int check_alias(cgiFormResultType cgi_result, const char * received_alias_str, const char * gateway_alias_str);
 int check_new_alias(cgiFormResultType cgi_result, const char * new_alias_str);
 int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const char * new_alias_str);
-
+int mAliasPushToCb(int status);
+int mPswPushToCb(int status);
 
 #endif //CLIENTADMIN_H__
 
