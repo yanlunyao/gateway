@@ -37,3 +37,6 @@ udpcliserv/
 unixdomain/
 
 
+/language.settings.xml
+/.project
+*.cproject
