@@ -106,5 +106,6 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 int mAliasPushToCb(int status);
 int mPswPushToCb(int status);
 
+
 #endif //CLIENTADMIN_H__
 

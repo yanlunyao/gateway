@@ -646,42 +646,42 @@ static int push_to_cloud(modifyType mt, const char *action_str, const char *old_
 *	  	  -1>>push error,socket send error
 * Others:  none
 */
-static int push_to_CBDaemon(const char *send_text, int send_size)
-{
-	int fd;
-	struct sockaddr_in	servaddr;
-
-	if ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-        CA_DEBUG("%d socket error\n", mt);
-		return -1;
-	}
-	bzero(&servaddr, sizeof(servaddr));
-	servaddr.sin_family = AF_INET;
-	servaddr.sin_port = htons(FEATURE_GDGL_CPROXY_CB_PUSH_PORT);
-
-	if ( (inet_pton(AF_INET, LOCALHOST_TEST, &servaddr.sin_addr)) <= 0) {
-		CA_DEBUG("%d inet_pton error:%d\n", mt, re);
-		close(fd);
-		return -2;
-	}
-
-	if ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
-		CA_DEBUG("%d connect error\n", mt);
-		close(fd);
-		return -1;
-	}
-	//sleep(1); //debug yan
-    if ( writen(fd, send_text, send_size) != send_size ) {
-		CA_DEBUG("%d write error\n", mt);
-		close(fd);
-		return -1;
-    }
-
-    //sleep(3); //debug yan
-	close(fd);
-
-	return 0;
-}
+//int push_to_CBDaemon(const char *send_text, int send_size)
+//{
+//	int fd;
+//	struct sockaddr_in	servaddr;
+//
+//	if ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
+//        CA_DEBUG("%d socket error\n", mt);
+//		return -1;
+//	}
+//	bzero(&servaddr, sizeof(servaddr));
+//	servaddr.sin_family = AF_INET;
+//	servaddr.sin_port = htons(FEATURE_GDGL_CPROXY_CB_PUSH_PORT);
+//
+//	if ( (inet_pton(AF_INET, LOCALHOST_TEST, &servaddr.sin_addr)) <= 0) {
+//		CA_DEBUG("%d inet_pton error:%d\n", mt, re);
+//		close(fd);
+//		return -2;
+//	}
+//
+//	if ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
+//		CA_DEBUG("%d connect error\n", mt);
+//		close(fd);
+//		return -1;
+//	}
+//	//sleep(1); //debug yan
+//    if ( writen(fd, send_text, send_size) != send_size ) {
+//		CA_DEBUG("%d write error\n", mt);
+//		close(fd);
+//		return -1;
+//    }
+//
+//    //sleep(3); //debug yan
+//	close(fd);
+//
+//	return 0;
+//}
 //end add by yanly
 /***************************************************************************
   Function: modify_password
