@@ -4,7 +4,8 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		clientLogin.cgi modifyPassword.cgi modifyAlias.cgi \
 		cloudProxyHttpModule clientadmin_daemon \
 		siftCallback_daemon \
-		net_stat bind_daemon
+		net_stat bind_daemon \
+		AddScene.cgi
 
 all:	${PROGS}
 
@@ -51,6 +52,22 @@ bind_daemon: bind_daemon.o cJSON.o
 #siftCallback_daemon
 siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
+
+
+#AddScene
+AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
+
+
+
+
+########################################test################################################
+#strsep_test
+strsep_test: strsep_test.o
+		${CC} ${CFLAGS} -o $@ strsep_test.o
+		
+clean_strsep: 
+		rm -f strsep_test strsep_test.o
 
 clean:
 		rm -f ${PROGS} ${CLEANFILES} *.o

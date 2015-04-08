@@ -24,6 +24,11 @@
 #endif
 #define GDGL_PRINTF(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 
+#define URL_API_DEBUG
+#ifdef URL_API_DEBUG
+#define URLAPI_DEBUG(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+#endif
+
 // UDP PORT
 #define FEATURE_GDGL_BCAST_PORT 5002
 #define FEATURE_GDGL_MCAST_PORT 5001
@@ -51,6 +56,7 @@
 #define FEATURE_GDGL_MAC_PATH "/gl/etc/mac.conf"
 #define FEATURE_GDGL_ALIAS_PATH "/gl/etc/alias.conf"
 #define FEATURE_GDGL_PASSWD_PATH "/gl/etc/password.conf"
+#define FEATURE_GDGL_TIME_SCENE_LINKAGE_DB		"/gl/etc/database/application.db"
 
 // Client admin
 #define FEATURE_GDGL_ACCOUNT_MAX_LEN 16
@@ -82,5 +88,71 @@ struct client_admin_msgbuf {
 // error_id public
 #define ERROR_ID_PUBLIC_JSON_PARSE_FAILED 1
 #define ERROR_ID_PUBLIC_REQUEST_HANDLER_INVALID 2
+
+/***********************api&&callback&&database data struct**************************/ //add by yanly
+#define NAME_STRING_LEN				30
+#define URL_STRING_LEN				200
+#define IEEE_LEN					16
+#define OUT_TIME_FORMAT_LEN			14
+#define LINKAGE_ACT_LEN				40
+
+//scene
+#if 1
+typedef struct{
+	int sid;
+	char scnname[NAME_STRING_LEN];
+	int scnindex;
+	char scnaction[100];
+}scene_base_st;
+typedef struct{
+//	int sid;
+	char acttotal;     							//总操作的个数
+	char actobj[IEEE_LEN];						//操作对象
+	char urlstring[URL_STRING_LEN];				//操作url串
+}scene_action_st, *scene_action_stPtr;
+#else
+typedef struct{
+	int sid;
+	char scnname[NAME_STRING_LEN];
+	char scnindex[10];  //存入数据库是int型，4个字节大小
+	char *scnaction;
+}scene_base_st;
+typedef struct{
+	//int sid;
+	char actobj[IEEE_LEN];
+	char *urlstring;
+}scene_action_st, *scene_action_stPtr;
+#endif
+typedef struct{
+	scene_base_st scene_base;
+	scene_action_st *scene_action;
+}scene_st;
+
+//time action
+typedef struct{
+	int tid;
+	char actname[NAME_STRING_LEN];
+	char acttype;
+	char actpara[40];
+	char para1[OUT_TIME_FORMAT_LEN];
+	char para2;
+	char para3[7];
+	char enable;
+	char urlstring[URL_STRING_LEN];
+}time_action_st;
+
+//linkage
+typedef struct{
+	int lid;
+	char lnkname[NAME_STRING_LEN];
+	char trgieee[IEEE_LEN];
+	char trgep[2];
+	char trgcnd[30];
+	char lnkact[40];
+	char enable;
+	char actobj[IEEE_LEN];
+	char urlstring[URL_STRING_LEN];
+}linkage_st;
+/************************************************************************************/
 
 #endif //SMARTGATEWAY_H__
