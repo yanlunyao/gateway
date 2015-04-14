@@ -24,9 +24,11 @@
 #endif
 #define GDGL_PRINTF(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 
-#define URL_API_DEBUG
+//#define URL_API_DEBUG
 #ifdef URL_API_DEBUG
 #define URLAPI_DEBUG(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+#else
+#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/etc/api.log","w"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 #endif
 
 // UDP PORT
@@ -90,11 +92,24 @@ struct client_admin_msgbuf {
 #define ERROR_ID_PUBLIC_REQUEST_HANDLER_INVALID 2
 
 /***********************api&&callback&&database data struct**************************/ //add by yanly
+//callback or api error respond
+#define ERROR_OPENED_DB					-1
+#define ERROR_ACCESS_DB					-2
+#define ERROR_READ_DB					-3
+#define ERROR_WRITE_DB					-4
+#define ERROR_MDFY_NO_ID_DB 			-5
+#define ERROR_PARAMETER_INVALID			-6
+#define	ERROR_GENERATE_URL_STRING		-7
+#define ERROR_HTTP_INVOKE				-8	//
+#define ERROR_OTHER						-9  //其它错误，比如分配内存失败的情况
+
 #define NAME_STRING_LEN				30
 #define URL_STRING_LEN				200
 #define IEEE_LEN					16
 #define OUT_TIME_FORMAT_LEN			14
 #define LINKAGE_ACT_LEN				40
+#define PARA3_LEN					7
+#define ACTPARA_LEN					40
 
 //scene
 #if 1
@@ -103,13 +118,23 @@ typedef struct{
 	char scnname[NAME_STRING_LEN];
 	int scnindex;
 	char scnaction[100];
-}scene_base_st;
+}scene_base_st, *scene_base_stPtr;
+
+typedef struct{
+	int list_total;
+	scene_base_stPtr scene_base;
+}scene_base_list_st;
+
 typedef struct{
 //	int sid;
 	char acttotal;     							//总操作的个数
 	char actobj[IEEE_LEN];						//操作对象
 	char urlstring[URL_STRING_LEN];				//操作url串
 }scene_action_st, *scene_action_stPtr;
+typedef struct{
+	int urltotal;     							//总操作的个数
+	char urlstring[URL_STRING_LEN];				//操作url串
+}url_string_st;
 #else
 typedef struct{
 	int sid;
@@ -130,15 +155,20 @@ typedef struct{
 
 //time action
 typedef struct{
-	int tid;
-	char actname[NAME_STRING_LEN];
-	char acttype;
-	char actpara[40];
-	char para1[OUT_TIME_FORMAT_LEN];
-	char para2;
-	char para3[7];
-	char enable;
 	char urlstring[URL_STRING_LEN];
+	char actobj[IEEE_LEN];
+}url_act_st;
+typedef struct{
+	int  tid;
+	char actmode;
+//	char acttype;
+	char enable;
+	char para2;
+	char para3[PARA3_LEN];
+	char para1[OUT_TIME_FORMAT_LEN];
+	char actpara[ACTPARA_LEN];
+	char actname[NAME_STRING_LEN];
+	url_act_st urlobject;
 }time_action_st;
 
 //linkage

@@ -3,27 +3,23 @@
  *  Created on  : Apr 2, 2015
  *  Author      : yanly
  *  Description :
- *  Version     :
- *  History     : <author>		<time>		<version>		<desc>
+ *  Version     : v1.0
+ *  History     : <author>		<time>			<version>		<desc>
+ *                yanly			2015-04-07		v1.00			addScene
  */
-#include "unp.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "cgic.h"
 #include "cJSON.h"
 #include "sqliteOperator.h"
 #include "glCalkProtocol.h"
+//#include "smartgateway.h"
 
-//define
-#define URL_PARA_NUM_ERROR	-1
-#define URL_PARA_TYPE_ERROR		-2
 
-#define URL_TYPE_DEV_BYPASS		1
-#define URL_TYPE_ALL_BYPASS		2
-#define	URL_TYPE_OUTLET			3
+//extern fun
+extern scene_action_stPtr scnaction_st_gener_malloc(const char *text);
 
-//
-scene_action_stPtr scnaction_st_gener_malloc(const char *text);
 
 #if 0
 static void api_response(const scene_base_st *scene_base, const scene_action_stPtr action)
@@ -87,88 +83,7 @@ static void api_error_res(int status)
     free(json_out);
 }
 
-/*
- * fuction     : gnerate_url_string
- * input       : type, para, para_cnt
- * output      : *url, *actobj
- * return      : success return url size,failed return ERROR FLAG
- * description : 如果解析出来的操作参数不能组成有效的url字符串，则返回错误。
- */
-int gnerate_url_string(int type, const char* para, char para_cnt, char *url, char *actobj)
-{
-	int nwrite;
-	char *p1, *p2, *p3;
 
-	switch(type){
-
-		case URL_TYPE_DEV_BYPASS:													//参数3个
-			if(para_cnt != 3)
-				return URL_PARA_NUM_ERROR;
-			p1 = (char *)para;				//ieee string
-			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
-			p3 = p2+ strlen(p2) +1;	//0-bypass 1-unbypass
-
-			if(atoi(p3)){
-				nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/"
-						"localIASCIEUnByPassZone.cgi?zone_ieee=%s&zone_ep=%s&callback=1234&encodemethod=NONE&sign"
-						"=AAA", p1,p2);
-			}else{
-
-				nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/"
-						"localIASCIEByPassZone.cgi?zone_ieee=%s&zone_ep=%s&callback=1234&encodemethod=NONE&sign"
-						"=AAA", p1,p2);
-			}
-			memcpy(actobj, p1, 16);
-			break;
-
-		case URL_TYPE_ALL_BYPASS:
-
-			if(para_cnt !=1 )
-				return URL_PARA_NUM_ERROR;
-
-			p1 = (char *)para;				//1-allbypass, 0-allunbypass
-			int status = atoi(p1)+6;
-
-			nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/localIASCIEOp"
-					"eration.cgi?operatortype=%d&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", status);//7-allbypass,6-allunbypass
-
-			actobj= NULL;
-			break;
-
-		case URL_TYPE_OUTLET:
-
-			if(para_cnt != 3)
-				return URL_PARA_NUM_ERROR;
-			p1 = (char *)para;				//ieee string
-			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
-			p3 = p2+ strlen(p2) +1;	//0-open, 1-close, 2-invert
-			//remapping operatortype
-			int opt = atoi(p3);
-			if(opt ==0){
-				opt = 1;
-			}
-			else if(opt == 1){
-				opt = 0;
-			}
-			else{
-				opt = 2;
-			}
-
-			nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/"
-					"mainsOutLetOperation.cgi?ieee=%s&ep=%s&operatortype=%d&"
-					"param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", p1, p2, opt);
-
-			memcpy(actobj, p1, 16);
-			break;
-
-		default:
-			return URL_PARA_TYPE_ERROR;
-			break;
-	}
-    nwrite = nwrite+1; // 加上结束符'\0'
-//   printf("urlstring:%s\n",url);
-    return nwrite;
-}
 int cgiMain()
 {
 	char send_cb_string[GL_CALLBACK_MAX_SIZE];
@@ -195,7 +110,7 @@ int cgiMain()
 	//generate scene_action_st
 	scene_action = scnaction_st_gener_malloc(scene_base.scnaction);							//malloc1
 	if(scene_action == NULL){
-		res = -6;
+		res = ERROR_GENERATE_URL_STRING;
 		goto all_over;
 	}
 
@@ -230,88 +145,5 @@ all_over:
     }
 	return 0;
 }
-/*
- * fuction     : scnaction_st_gener_malloc
- * input       : text---is scene_base.scnaction
- * output      :
- * return      : ok--scene_action_stPtr[];failed--NULL
- * description : atter using this scene_action_stPtr[] of return value must be free() this struct*
- */
-scene_action_stPtr scnaction_st_gener_malloc(const char *text)
-{
-    int copy_len;
-    char optCnt=0, paraCnt=0;
-    int i=0; //分割次数
-    char *copy, *copy_ptr;
-
-    char *actpara, *acttype, *para;
-    scene_action_stPtr action;
-
-    copy_len = strlen(text) + 1;
-    if (!(copy = (char*)malloc(copy_len))) return NULL;				//malloc 1
-    memcpy(copy, text, copy_len);
-    //strsep()被分割字串要被改变，所以不能操作存放在静态存储区的字串常量//strsep之后指向的字符串里分隔符会变成"/0"
-    copy_ptr = copy;
-
-    /***********************************************************/  									//分割并组url串
-    while (strsep(&copy_ptr, "@")){									   		//分割'@'
-    	optCnt++;
-    }
-    if(optCnt >0){															//malloc 2
-    	action = (scene_action_stPtr)malloc(optCnt*(sizeof(scene_action_st)));		//free在外层释放
-    	if(!action){
-    		free(copy);
-    		return NULL;
-    	}
-    }
-    else{
-    	free(copy);
-    	return NULL;
-    }
-
-    for (copy_ptr = copy; copy_ptr< (copy + copy_len);) {
-
-    	actpara = acttype = copy_ptr;
-        for (copy_ptr += strlen(copy_ptr); copy_ptr < (copy +copy_len) && !*copy_ptr; copy_ptr++);
-        acttype = strsep(&actpara,":");							//分割':', only once
-
-        paraCnt =0;
-        para =actpara;
-//        paralen = strlen(actpara);
-        while (strsep(&para, "-")){								//分割'-'
-        	paraCnt++;
-        }
-
-        if(i> optCnt){											//组串的次数大于操作总数会出错
-        	free(action);
-        	free(copy);
-        	return NULL;
-        }
-        if(gnerate_url_string(atoi(acttype), actpara, paraCnt, action[i].urlstring, action[i].actobj) <0){
-        	URLAPI_DEBUG("gnerate url faied!!!!!!!!!!!!!!!!!!!!!!!\n");
-        	free(action);
-        	free(copy);
-        	return NULL;//根据操作类型和操作参数组串
-        }
-        i++;
-    }
-    if(i!= optCnt){												//组串的次数和操作总数相同才对
-    	free(action);
-    	free(copy);
-    	return NULL;
-    }
-
-    for(i=0; i<optCnt; i++){
-    	action[i].acttotal = optCnt;
-    }
-
-    free(copy);													//free 1
-    return action;
-}
-
-
-
-
-
 
 

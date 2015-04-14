@@ -7,9 +7,10 @@
 #include "unp.h"
 #include <string.h>
 #include <stdlib.h>
+//#include "smartgateway.h"
 #include "cJSON.h"
 #include "glCalkProtocol.h"
-#include "smartgateway.h"
+
 
 /*
 * Function: push_to_CBDaemon
@@ -126,7 +127,7 @@ int cJsonPsw_callback(char *text, int status_value)
 /*
  * Function: cJsonScene_callback
  * return: success>>string size,error>>error flag
- * description: none
+ * description: this callback funciton just for addScene, editScene and modifySceneIndex
 */
 int cJsonScene_callback(char *text, const scene_base_st *scene, const char *sindexall, const char *sidall, int subid, int status_value)
 {
@@ -158,6 +159,41 @@ int cJsonScene_callback(char *text, const scene_base_st *scene, const char *sind
 			cJSON_AddStringToObject(root, "scnindexall", sindexall);
 		}
 	}
+    if((out = cJSON_PrintUnformatted(root)) == 0 ){
+    	URLAPI_DEBUG("print cjson failed\n");
+		cJSON_Delete(root);
+		return -1;
+    }
+
+    nwrite = snprintf(text, GL_CALLBACK_MAX_SIZE, "%s", out);
+    nwrite = nwrite+1; // 加上结束符'\0'
+
+    cJSON_Delete(root);
+	free(out);;
+    return nwrite;
+
+}
+int cJsonDelDoScene_callback(char *text, int sid, int subid, int res)
+{
+    cJSON *root;
+    char *out;
+    int nwrite;
+
+	root = cJSON_CreateObject();
+	if (!root) {
+		URLAPI_DEBUG("create cjson failed\n");
+		return -1;
+	}
+
+	cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
+	cJSON_AddNumberToObject(root, GL_MAINID, GL_MAINID_SCENE);
+	cJSON_AddNumberToObject(root, GL_SUBID, subid);
+	cJSON_AddNumberToObject(root, "status", res);
+
+	if(res >=0){
+		cJSON_AddNumberToObject(root, "sid", sid);
+	}
+
     if((out = cJSON_PrintUnformatted(root)) == 0 ){
     	URLAPI_DEBUG("print cjson failed\n");
 		cJSON_Delete(root);

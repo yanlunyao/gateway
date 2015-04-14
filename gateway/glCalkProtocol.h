@@ -10,7 +10,6 @@
 
 #include "smartgateway.h"
 
-
 /*******************************************************/  //cjson fields
 //general
 #define MSGTYPE_STRING			"msgtype"
@@ -30,6 +29,13 @@
 #define	GL_SUBID_M_PSW			1
 #define	GL_SUBID_M_ALIAS		2
 
+//scene
+#define	ADD_SUBID_SCENE			1
+#define	EDIT_SUBID_SCENE		2
+#define	DEL_SUBID_SCENE			3
+#define	DO_SUBID_SCENE			4
+#define	MODIFYIDX_SUBID_SCENE	5
+
 /*******************************************************/  //status values
 #define	GL_MODIFY_ACTION_OK		0    //modify alias or password success
 
@@ -40,6 +46,7 @@
 int cJsonAlias_callback(char *text, int status_value);
 int cJsonPsw_callback(char *text, int status_value);
 int cJsonScene_callback(char *text, const scene_base_st *scene, const char *sindexall, const char *sidall, int subid, int status_value);
+int cJsonDelDoScene_callback(char *text, int sid, int subid, int res);
 int push_to_CBDaemon(const char *send_text, int send_size);
 
 #endif /* GLPROTOCOL_H_ */

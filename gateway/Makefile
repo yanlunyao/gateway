@@ -5,7 +5,7 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		cloudProxyHttpModule clientadmin_daemon \
 		siftCallback_daemon \
 		net_stat bind_daemon \
-		AddScene.cgi
+		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi 
 
 all:	${PROGS}
 
@@ -55,12 +55,34 @@ siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 
 
 #AddScene
-AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
-		${CC} ${CFLAGS} -o $@ addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
+AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
+		${CC} ${CFLAGS} -o $@ addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
+#EditScene
+EditScene.cgi:	editScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
+		${CC} ${CFLAGS} -o $@ editScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
+#EditScene.cgi:	editScene.o cgic.o cJSON.o sqliteOperator.o generUrl.o  
+#		${CC} ${CFLAGS} -o $@ editScene.o cgic.o cJSON.o sqliteOperator.o generUrl.o ${LIBS} -lm -lsqlite3
+
+#DelScene
+DelScene.cgi:	delScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ delScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
+#DelScene.cgi:	delScene.o cgic.o cJSON.o sqliteOperator.o 
+#		${CC} ${CFLAGS} -o $@ delScene.o cgic.o cJSON.o sqliteOperator.o ${LIBS} -lm -lsqlite3		
+
+GetSceneList.cgi:	getSceneList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ getSceneList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
+#GetSceneList.cgi:	getSceneList.o cgic.o cJSON.o sqliteOperator.o 
+#		${CC} ${CFLAGS} -o $@ getSceneList.o cgic.o cJSON.o sqliteOperator.o ${LIBS} -lm -lsqlite3		
+
+DoScene.cgi:	doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o  glCalkProtocol.o ${LIBS} -lm -lsqlite3 -lcurl
+
+ModifySceneIndex.cgi:	modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
 
 
-
-
+#timerActionLoop:	timerActionLoop.o
+#		${CC} ${CFLAGS} -o $@ timerActionLoop.o
 ########################################test################################################
 #strsep_test
 strsep_test: strsep_test.o
@@ -68,6 +90,13 @@ strsep_test: strsep_test.o
 		
 clean_strsep: 
 		rm -f strsep_test strsep_test.o
+
+#libevent_test
+libevent_test: libevent_test.o
+		${CC} ${CFLAGS} -o $@ libevent_test.o -levent
+		
+mv_obj:
+		mv ${PROGS} /home/mac/nfs_share/yanlyFolder/
 
 clean:
 		rm -f ${PROGS} ${CLEANFILES} *.o
