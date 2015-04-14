@@ -17,3 +17,14 @@ clientadmin_daemon
 /timedaction.h
 /language.settings.xml
 /siftCallback_daemon.c
+*.cgi
+/timerActionLoop.h
+/timerActionLoop.c
+/libevent_test.c
+/libevent_test
+/sqliteOperator_backup151410.h
+/strsep_test.c
+/strsep_test
+/sqliteOperator_backup150410.c
+/timerActionLoop
+/bind_daemon
