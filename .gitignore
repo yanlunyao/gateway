@@ -40,3 +40,4 @@ unixdomain/
 /language.settings.xml
 /.project
 *.cproject
+*.tar.gz
