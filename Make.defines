@@ -8,6 +8,7 @@
 #
 # System = i686-pc-linux-gnu
 
+#CC = gcc
 CC = arm-arago-linux-gnueabi-gcc
 CFLAGS = -I../lib -g -O2 -D_REENTRANT -Wall
 LIBS = ../libunp.a -lpthread

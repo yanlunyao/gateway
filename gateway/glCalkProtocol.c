@@ -208,4 +208,98 @@ int cJsonDelDoScene_callback(char *text, int sid, int subid, int res)
     return nwrite;
 
 }
+/*
+* Function: cJsonTimeAction_callback
+* Description:
+* Input: id_value
+* Output: none
+* Return:
+* Others:  none
+*/
+int cJsonTimeAction_callback(char *text, int subid, int res, int id_value, const time_action_base_st *time_act)
+{
+    cJSON *root;
+    char *out;
+    int nwrite;
+
+	root = cJSON_CreateObject();
+	if (!root) {
+		URLAPI_DEBUG("create cjson failed\n");
+		return -1;
+	}
+
+	cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
+	cJSON_AddNumberToObject(root, GL_MAINID, GL_MAINID_TA);
+	cJSON_AddNumberToObject(root, GL_SUBID, subid);
+	cJSON_AddNumberToObject(root, "status", res);
+
+	if(res >=0){
+		cJSON_AddNumberToObject(root, "tid", id_value);
+		if(time_act !=NULL)
+		{
+			cJSON_AddStringToObject(root, "actname", time_act->actname);
+	    	cJSON_AddStringToObject(root, "actpara", time_act->actpara);
+
+	    	cJSON_AddNumberToObject(root, "actmode", time_act->actmode);
+
+	    	cJSON_AddStringToObject(root, "para1", time_act->para1);
+
+	    	cJSON_AddNumberToObject(root, "para2", time_act->para2);
+
+	    	cJSON_AddStringToObject(root, "para3", time_act->para3);
+
+	    	cJSON_AddNumberToObject(root, "enable", time_act->enable);
+
+		}
+	}
+
+    if((out = cJSON_PrintUnformatted(root)) == 0 ){
+    	URLAPI_DEBUG("print cjson failed\n");
+		cJSON_Delete(root);
+		return -1;
+    }
+
+    nwrite = snprintf(text, GL_CALLBACK_MAX_SIZE, "%s", out);
+    nwrite = nwrite+1; // 加上结束符'\0'
+
+    cJSON_Delete(root);
+	free(out);;
+    return nwrite;
+}
+//这个callback没有整合在一起
+int cJsonEnableTimeAction_callback(char *text, int subid, int res, int id_value, int do_status)
+{
+    cJSON *root;
+    char *out;
+    int nwrite;
+
+	root = cJSON_CreateObject();
+	if (!root) {
+		URLAPI_DEBUG("create cjson failed\n");
+		return -1;
+	}
+
+	cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
+	cJSON_AddNumberToObject(root, GL_MAINID, GL_MAINID_TA);
+	cJSON_AddNumberToObject(root, GL_SUBID, subid);
+	cJSON_AddNumberToObject(root, "status", res);
+
+	if(res >=0){
+		cJSON_AddNumberToObject(root, "tid", id_value);
+	    cJSON_AddNumberToObject(root, "enable", do_status);
+	}
+
+    if((out = cJSON_PrintUnformatted(root)) == 0 ){
+    	URLAPI_DEBUG("print cjson failed\n");
+		cJSON_Delete(root);
+		return -1;
+    }
+
+    nwrite = snprintf(text, GL_CALLBACK_MAX_SIZE, "%s", out);
+    nwrite = nwrite+1; // 加上结束符'\0'
+
+    cJSON_Delete(root);
+	free(out);;
+    return nwrite;
+}
 

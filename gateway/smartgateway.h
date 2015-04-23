@@ -48,6 +48,8 @@
 #define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT_STR "5021" //test debug
 #define FEATURE_GDGL_CPROXY_CALLBACK_PORT 5019  //test debug
 #define FEATURE_GDGL_CPROXY_CALLBACK_PORT_STR "5019" //test debug
+#define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT	5018
+#define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT_STR	"5018"
 
 //yan test
 #define LOCALHOST_TEST		"127.0.0.1"//"127.0.0.1"//"192.168.1.196"
@@ -58,7 +60,20 @@
 #define FEATURE_GDGL_MAC_PATH "/gl/etc/mac.conf"
 #define FEATURE_GDGL_ALIAS_PATH "/gl/etc/alias.conf"
 #define FEATURE_GDGL_PASSWD_PATH "/gl/etc/password.conf"
+
 #define FEATURE_GDGL_TIME_SCENE_LINKAGE_DB		"/gl/etc/database/application.db"
+#define TIME_ACTION_TABLE_NAME		"t_time_action"
+#define LINkAGE_TABLE_NAME			"t_linkage"
+#define SCENE_TABLE_NAME			"t_scene"
+#define	SCENE_ACTION_TABLE_NAME		"t_scene_act"
+#define	TABLE1						1
+#define TABLE2						2
+#define TABLE3						3
+#define TABLE4						4
+#define	TIME_ACTION_TABLE_FLAG		TABLE1
+#define	SCENE_TABLE_FLAG			TABLE2
+#define	SCENE_ACTION_TABLE_FLAG		TABLE3
+#define	LINkAGE_TABLE_FLAG			TABLE4
 
 // Client admin
 #define FEATURE_GDGL_ACCOUNT_MAX_LEN 16
@@ -92,9 +107,12 @@ struct client_admin_msgbuf {
 #define ERROR_ID_PUBLIC_REQUEST_HANDLER_INVALID 2
 
 /***********************api&&callback&&database data struct**************************/ //add by yanly
+//所有规则的共性值
+#define ENABLE						1
+#define DISABLE						0
 //callback or api error respond
 #define ERROR_OPENED_DB					-1
-#define ERROR_ACCESS_DB					-2
+#define ERROR_ACCESS_DB					-2			//一般可能是sql语句错误
 #define ERROR_READ_DB					-3
 #define ERROR_WRITE_DB					-4
 #define ERROR_MDFY_NO_ID_DB 			-5
@@ -110,6 +128,16 @@ struct client_admin_msgbuf {
 #define LINKAGE_ACT_LEN				40
 #define PARA3_LEN					7
 #define ACTPARA_LEN					40
+#define DELAY_OR_REPEAT_TIME_FLAG_LEN	PARA3_LEN
+
+//定时规则参数值
+#define TIME_ACTION_DELAY_MODE		2
+#define TIME_ACTION_TIMING_MODE		1
+#define START_TIMEACTION			ENABLE
+#define STOP_TIMEACTION				DISABLE
+#define TIME_ACTION_REPEAT_ENABLE	ENABLE
+#define	TIME_ACTION_REPEAT_DISABLE	DISABLE
+#define TID_MAX			30
 
 //scene
 #if 1
@@ -160,26 +188,38 @@ typedef struct{
 }url_act_st;
 typedef struct{
 	int  tid;
-	char actmode;
-//	char acttype;
-	char enable;
-	char para2;
-	char para3[PARA3_LEN];
-	char para1[OUT_TIME_FORMAT_LEN];
-	char actpara[ACTPARA_LEN];
 	char actname[NAME_STRING_LEN];
+	char actpara[ACTPARA_LEN];
+	int actmode;
+	char para1[OUT_TIME_FORMAT_LEN];
+	int para2;
+	char para3[PARA3_LEN];
+	int enable;
+}time_action_base_st;
+typedef struct{
+	time_action_base_st ta_base;
 	url_act_st urlobject;
-}time_action_st;
-
+}time_action_st, *time_action_stPtr;
+typedef struct{
+	int tid;	//empty is -1.
+	char mode;	//1~timing, 2~delay
+	char excute_time[OUT_TIME_FORMAT_LEN];
+	char repeat;	//1~repeat, 0~not repeat
+	char process_time[DELAY_OR_REPEAT_TIME_FLAG_LEN]; //表示每周重复时间设置或延时时间
+}time_list_st;
+typedef struct{
+	int list_total;
+	time_action_base_st *time_action_base;
+}time_action_alllist_st;
 //linkage
 typedef struct{
-	int lid;
+	int  lid;
 	char lnkname[NAME_STRING_LEN];
 	char trgieee[IEEE_LEN];
 	char trgep[2];
 	char trgcnd[30];
 	char lnkact[40];
-	char enable;
+	int enable;
 	char actobj[IEEE_LEN];
 	char urlstring[URL_STRING_LEN];
 }linkage_st;

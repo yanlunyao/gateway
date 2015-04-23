@@ -5,7 +5,9 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		cloudProxyHttpModule clientadmin_daemon \
 		siftCallback_daemon \
 		net_stat bind_daemon \
-		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi 
+		timingloop_daemon \
+		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi  \
+		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi
 
 all:	${PROGS}
 
@@ -53,7 +55,7 @@ bind_daemon: bind_daemon.o cJSON.o
 siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
 
-
+#################################################################################################################################   //scene cgi
 #AddScene
 AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
 		${CC} ${CFLAGS} -o $@ addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
@@ -80,10 +82,29 @@ DoScene.cgi:	doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o glCalkPr
 ModifySceneIndex.cgi:	modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
 		${CC} ${CFLAGS} -o $@ modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
 
+#################################################################################################################################   //timeaction cgi
+#AddTimeAction
+AddTimeAction.cgi:	addTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
+		${CC} ${CFLAGS} -o $@ addTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
+#EditTimeAction
+EditTimeAction.cgi:	editTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
+		${CC} ${CFLAGS} -o $@ editTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
+#DelTimeAction
+DelTimeAction.cgi:	delTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ delTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
+#GetTimeActionList
+GetTimeActionList.cgi:	getTimeActionList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ getTimeActionList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
+#EnableTimeAction.cgi
+EnableTimeAction.cgi:	enableTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ enableTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o ${LIBS} -lm -lsqlite3
 
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
 ########################################test################################################
+#timingloop_daemon
+timingloop_daemon:	timingLoop_daemon.o cJSON.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o
+		${CC} ${CFLAGS} -o $@ timingLoop_daemon.o cJSON.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o ${LIBS} -lm -lsqlite3
 #strsep_test
 strsep_test: strsep_test.o
 		${CC} ${CFLAGS} -o $@ strsep_test.o
