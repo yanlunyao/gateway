@@ -144,7 +144,8 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			}
 			else
 				return URL_PARA_NUM_ERROR;
-			memcpy(actobj, p1, 16);
+//			memcpy(actobj, p1, 16);
+			snprintf(actobj, IEEE_LEN+1, p1);
 			break;
 
 		case URL_TYPE_ALL_BYPASS:
@@ -193,7 +194,8 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 					"mainsOutLetOperation.cgi?ieee=%s&ep=%s&operatortype=%d&"
 					"param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", p1, p2, opt);
 
-			memcpy(actobj, p1, 16);
+//			memcpy(actobj, p1, 16);
+			snprintf(actobj, IEEE_LEN+1, p1);
 			break;
 
 		default:
@@ -297,6 +299,7 @@ int gnerate_per_urlobj(url_act_st *object, const char *text)
     char paraCnt=0;
     char *copy, *copy_ptr;
     char *actpara, *acttype;
+//    url_act_st isinstance;
 
     copy_len = strlen(text) + 1;
     if (!(copy = (char*)malloc(copy_len))) return ERROR_OTHER;				//malloc 1
@@ -308,15 +311,19 @@ int gnerate_per_urlobj(url_act_st *object, const char *text)
 	acttype = strsep(&copy_ptr,":");							//分割':', only once
 	paraCnt =0;
 	actpara = copy_ptr;
-
-	while (strsep(&copy_ptr, "-"))							//分割'-'
+//	printf("%s, %s\n", acttype, actpara);
+	while (strsep(&copy_ptr, "-")){							//分割'-'
 		paraCnt++;
-
+	}
+//	printf("%d, %d,%s\n", paraCnt, atoi(acttype),actpara);
 	if(gnerate_url_string(atoi(acttype), actpara, paraCnt, object->urlstring, object->actobj) <0){
 		URLAPI_DEBUG("gnerate url faied!\n");
 		free(copy);
 		return ERROR_GENERATE_URL_STRING;//根据操作类型和操作参数组串
 	}
+//	printf("%s, %s\n", isinstance.urlstring, isinstance.actobj);
+//	strcpy(object->urlstring, isinstance.urlstring);
+//	strcpy(object->actobj, isinstance.actobj);
 //all over:
 	if(copy)
 		free(copy);													//free 1
