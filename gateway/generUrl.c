@@ -330,3 +330,37 @@ int gnerate_per_urlobj(url_act_st *object, const char *text)
     return 0;
 
 }
+int gnerate_linkage_trgcnd_st(linkage_trgcnd_st *condition_st, const char *text)
+{
+    int copy_len;
+    char paraCnt=0;
+    char *copy, *copy_ptr;
+    char *p1, *p2, *p3;
+
+    copy_len = strlen(text) + 1;
+    if (!(copy = (char*)malloc(copy_len))) return ERROR_OTHER;				//malloc 1
+    memcpy(copy, text, copy_len);
+    copy_ptr = copy;
+    /***********************************************************/
+	while (strsep(&copy_ptr, "@")){							//分割'@'
+		paraCnt++;
+	}
+	if(paraCnt !=3) {
+		free(copy);
+		return ERROR_PARAMETER_INVALID;
+	}
+
+	p1 = (char *)copy;
+	p2 = p1+ strlen(p1) +1;  //why +1, becasue add '/0'
+	p3 = p2+ strlen(p2) +1;
+	snprintf(condition_st->attribute, ATTRIBUTE_LEN+1, p1);
+	snprintf(condition_st->operator, REL_OPERATOR_LEN+1, p2);
+	condition_st->value = atoi(p3);
+
+//free
+	if(copy)
+		free(copy);													//free 1
+    return 0;
+}
+
+

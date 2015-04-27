@@ -25,6 +25,13 @@
 #define FIELD_PARA3				"para3"
 #define FIELD_ENABLE			"enable"
 
+#define FIELD_LID				"lid"
+#define FIELD_LNKNAME			"lnkname"
+#define FIELD_TRGIEEE			"trgieee"
+#define FIELD_TRGEP				"trgep"
+#define FIELD_TRGCND			"trgcnd"
+#define FIELD_LNKACT			"lnkact"
+
 //value
 //==========================================================================================================
 //

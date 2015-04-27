@@ -10,7 +10,7 @@
 //#include "smartgateway.h"
 #include "cJSON.h"
 #include "glCalkProtocol.h"
-
+#include "callbackProtocolField.h"
 
 /*
 * Function: push_to_CBDaemon
@@ -302,4 +302,86 @@ int cJsonEnableTimeAction_callback(char *text, int subid, int res, int id_value,
 	free(out);;
     return nwrite;
 }
+/*
+ *fuction: linkage callback
+ * */
+int cJsonLinkage_callback(char *text, int subid, int res, int id_value, const linkage_base_st *link_base)
+{
+    cJSON *root;
+    char *out;
+    int nwrite;
 
+	root = cJSON_CreateObject();
+	if (!root) {
+		URLAPI_DEBUG("create cjson failed\n");
+		return -1;
+	}
+
+	cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
+	cJSON_AddNumberToObject(root, GL_MAINID, MAINID_LINKAGE);
+	cJSON_AddNumberToObject(root, GL_SUBID, subid);
+	cJSON_AddNumberToObject(root, "status", res);
+
+	cJSON_AddNumberToObject(root, FIELD_STATUS, res);
+	if(res >=0){
+		cJSON_AddNumberToObject(root, FIELD_LID, id_value);
+		if(link_base !=NULL)
+		{
+			cJSON_AddStringToObject(root, FIELD_LNKNAME, link_base->lnkname);
+			cJSON_AddStringToObject(root, FIELD_TRGIEEE, link_base->trgieee);
+			cJSON_AddStringToObject(root, FIELD_TRGEP, link_base->trgep);
+			cJSON_AddStringToObject(root, FIELD_TRGCND, link_base->trgcnd);
+			cJSON_AddStringToObject(root, FIELD_LNKACT, link_base->lnkact);
+			cJSON_AddNumberToObject(root, FIELD_ENABLE, link_base->enable);
+		}
+	}
+
+    if((out = cJSON_PrintUnformatted(root)) == 0 ){
+    	URLAPI_DEBUG("print cjson failed\n");
+		cJSON_Delete(root);
+		return -1;
+    }
+
+    nwrite = snprintf(text, GL_CALLBACK_MAX_SIZE, "%s", out);
+    nwrite = nwrite+1; // 加上结束符'\0'
+
+    cJSON_Delete(root);
+	free(out);;
+    return nwrite;
+}
+int cJsonEnableLinkage_callback(char *text, int subid, int res, int id_value, int enable)
+{
+    cJSON *root;
+    char *out;
+    int nwrite;
+
+	root = cJSON_CreateObject();
+	if (!root) {
+		URLAPI_DEBUG("create cjson failed\n");
+		return -1;
+	}
+
+	cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
+	cJSON_AddNumberToObject(root, GL_MAINID, MAINID_LINKAGE);
+	cJSON_AddNumberToObject(root, GL_SUBID, subid);
+	cJSON_AddNumberToObject(root, "status", res);
+
+	cJSON_AddNumberToObject(root, FIELD_STATUS, res);
+	if(res >=0){
+		cJSON_AddNumberToObject(root, FIELD_LID, id_value);
+		cJSON_AddNumberToObject(root, FIELD_ENABLE, enable);
+	}
+
+    if((out = cJSON_PrintUnformatted(root)) == 0 ){
+    	URLAPI_DEBUG("print cjson failed\n");
+		cJSON_Delete(root);
+		return -1;
+    }
+
+    nwrite = snprintf(text, GL_CALLBACK_MAX_SIZE, "%s", out);
+    nwrite = nwrite+1; // 加上结束符'\0'
+
+    cJSON_Delete(root);
+	free(out);;
+    return nwrite;
+}

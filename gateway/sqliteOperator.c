@@ -113,9 +113,10 @@ int t_linkage_create()
     int ret = 0;
     char* errmsg=NULL;
 
-    const char *sql="create table if not exists t_linkage(lid integer primary key autoincrement,lnkname nvarchar(30),\
-    		trgieee char(16),trgep char(2),trgcnd varchar(30),lnkact varchar(40),enable int(1),\
-    		actobj char(16),urlstring varchar(200))";
+    const char *sql="create table if not exists t_linkage(lid integer primary key autoincrement,"
+    		"lnkname nvarchar(30),trgieee char(16),trgep char(2),trgcnd varchar(30),lnkact varchar(40),enable char(1),"
+    		"attribute varchar(10),operator char(2),value int(1),"
+    		"actobj char(16),urlstring varchar(200))";
 
     //表不存在就建表
     result = sqlite3_exec(db,sql, NULL, NULL, &errmsg);
@@ -175,12 +176,12 @@ void db_close()
  * return: 0-ok, <0-failed
  * others:
  * */
-int t_standard_by_stmt(sqlite3 *db, const char *sql)
+int t_standard_by_stmt(sqlite3 *target_db, const char *sql)
 {
 	int res;
 	sqlite3_stmt* stmt = NULL;
 
-	if (sqlite3_prepare_v2(db, sql, strlen(sql), &stmt, NULL) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
+	if (sqlite3_prepare_v2(target_db, sql, strlen(sql), &stmt, NULL) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
 		if(stmt)
 			sqlite3_finalize(stmt);
 		return (res = ERROR_ACCESS_DB);
@@ -599,12 +600,12 @@ int time_action_get_enable_list(time_list_st *list) //
 
 	const char *querySql = "SELECT tid,actmode,para1,para2,para3 FROM t_time_action WHERE enable=1";
 
-	//准备
-	res = db_init();
-	if(res<0){
-		db_close();
-		return res;
-	}
+//	//准备
+//	res = db_init();
+//	if(res<0){
+//		db_close();
+//		return res;
+//	}
 
     if( sqlite3_get_table(db, querySql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
     	GDGL_DEBUG("read db failed:%s\n",errmsg);
@@ -618,6 +619,7 @@ int time_action_get_enable_list(time_list_st *list) //
 
     if(row >= TID_MAX){	//允许同时启用的定时规则范围外
     	sqlite3_free_table(result);
+    	GDGL_DEBUG("tid exceed max num\n");
     	return res = -1; //
     }
 	index = col;
@@ -721,44 +723,44 @@ int t_timeaction_get_alllist(sqlite3 *db, time_action_base_st ***time_act, int *
  * return:	0-ok, <0-failed
  * others:
  * */
-int t_linkage_getlist_byid(sqlite3 *db, linkage_st *linkage_act, int id)
-{
-	int res;
-
-	char *errmsg;
-	char **result;
-	int j;//,i;
-	int row, col, index;
-	char sql[SQL_STRING_MAX_LEN];
-	const char *querySql = "SELECT lid,lnkname,trgieee,trgep,trgcnd,lnkact,enable FROM t_linkage WHERE lid=%d";
-	sprintf(sql, querySql, id);
-    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
-		URLAPI_DEBUG("read db failed:%s\n",errmsg);
-		return (res = ERROR_READ_DB);
-    }
-
-    URLAPI_DEBUG("row=%d,col=%d\n",row,col);
-    //generate scene_base
-    if(row ==0){
-    	sqlite3_free_table(result);
-    	return (res = ERROR_MDFY_NO_ID_DB);
-    }
-	index = col;
-
-    for(j=0; j<row; j++){
-    	linkage_act->lid = atoi(result[index]);
-    	strcpy(linkage_act->lnkname, result[index+1]);
-    	strcpy(linkage_act->trgieee, result[index+2]);
-    	strcpy(linkage_act->trgep, result[index+3]);
-    	strcpy(linkage_act->trgcnd, result[index+4]);
-    	strcpy(linkage_act->lnkact, result[index+5]);
-    	linkage_act->enable = atoi(result[index+6]);
-        index += col;
-    }
-	//free
-	sqlite3_free_table(result);
-	return 0;
-}
+//int t_linkage_getlist_byid(sqlite3 *db, linkage_st *linkage_act, int id)
+//{
+//	int res;
+//
+//	char *errmsg;
+//	char **result;
+//	int j;//,i;
+//	int row, col, index;
+//	char sql[SQL_STRING_MAX_LEN];
+//	const char *querySql = "SELECT lid,lnkname,trgieee,trgep,trgcnd,lnkact,enable FROM t_linkage WHERE lid=%d";
+//	sprintf(sql, querySql, id);
+//    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
+//		URLAPI_DEBUG("read db failed:%s\n",errmsg);
+//		return (res = ERROR_READ_DB);
+//    }
+//
+//    URLAPI_DEBUG("row=%d,col=%d\n",row,col);
+//    //generate scene_base
+//    if(row ==0){
+//    	sqlite3_free_table(result);
+//    	return (res = ERROR_MDFY_NO_ID_DB);
+//    }
+//	index = col;
+//
+//    for(j=0; j<row; j++){
+//    	linkage_act->lid = atoi(result[index]);
+//    	strcpy(linkage_act->lnkname, result[index+1]);
+//    	strcpy(linkage_act->trgieee, result[index+2]);
+//    	strcpy(linkage_act->trgep, result[index+3]);
+//    	strcpy(linkage_act->trgcnd, result[index+4]);
+//    	strcpy(linkage_act->lnkact, result[index+5]);
+//    	linkage_act->enable = atoi(result[index+6]);
+//        index += col;
+//    }
+//	//free
+//	sqlite3_free_table(result);
+//	return 0;
+//}
 /*
  * function: add_scene_db()
  * description: add_scene_db
@@ -1303,135 +1305,120 @@ int read_timeaction_url_db(int id, char *urlstring)
 /**********************************************************************************************/  //table:t_linkage
 /*
  * function: add_linkage_db()
- * description: add_linkage_db
- * input:
- * output:
- * return: 0-ok, <0-failed
- * others:
  * */
-int add_linkage_db(linkage_st *linkage_act)
+int add_linkage_db(int *id_value, const linkage_st *linkage_act)
 {
 	int res;
 	char sql[SQL_STRING_MAX_LEN];
 
-	const char* insertSQL = "INSERT INTO t_time_action VALUES (null,'%s', '%s', %d, '%s', '%s', %d, '%s', '%s' )";
+	const char* insertSQL = "INSERT INTO t_linkage VALUES (NULL,'%s','%s','%s','%s','%s',%d,'%s','%s',%d,'%s','%s')";
 
-	sprintf(sql, insertSQL, linkage_act->lnkname, linkage_act->trgieee, linkage_act->trgep, linkage_act->trgcnd, linkage_act->lnkact,
-			linkage_act->enable, linkage_act->actobj, linkage_act->urlstring);
+	sprintf(sql, insertSQL, linkage_act->lnk_base.lnkname, linkage_act->lnk_base.trgieee, linkage_act->lnk_base.trgep,
+			linkage_act->lnk_base.trgcnd, linkage_act->lnk_base.lnkact, linkage_act->lnk_base.enable,
+			linkage_act->lnk_condition.attribute, linkage_act->lnk_condition.operator, linkage_act->lnk_condition.value,
+			linkage_act->urlobject.actobj, linkage_act->urlobject.urlstring);
 
-	//准备
-	res = db_init();
-	if(res<0){
-		db_close();
-		return res;
-	}
 	res = t_linkage_create();
 	if(res<0){
-		db_close();
 		return res;
 	}
-	//写
-	res = t_insert_retid(db, sql, &linkage_act->lid);
+	res = t_insert_retid(db, sql, id_value);
 	if(res<0){
-		db_close();
 		return res;
 	}
-	//关闭数据库
-	db_close();
+
 	return (res = 0);
 }
-/*
- * function: edit_linkage_db()
- * description: edit_linkage_db
- * input:
- * output:
- * return: 0-ok, <0-failed
- * others:
- * */
 int edit_linkage_db(const linkage_st *linkage_act)
 {
 	int res;
-
-	const char* updateSQL = "UPDATE t_linkage SET lnkname='%s', trgieee='%s', trgep=%d, trgcnd='%s', lnkact='%s', enable=%d, "
-			"actobj='%s' urlstring='%s' WHERE lid = %d";
+//	UPDATE t_linkage SET lnkname='%s',trgieee='%s',trgep='%s',trgcnd='%s',lnkact='%s',
+//			enable=%d,attribute='%s',operator='%s',value='%s',actobj='%s',urlstring='%s' WHERE lid=%d
+	const char* updateSQL = "UPDATE t_linkage SET lnkname='%s',trgieee='%s',trgep='%s',trgcnd='%s',lnkact='%s',"
+			"enable=%d,attribute='%s',operator='%s',value=%d,actobj='%s',urlstring='%s' WHERE lid=%d";
 
 	char sql[SQL_STRING_MAX_LEN];
 
-	//准备
-	res = db_init();
-	if(res<0){
-		db_close();
-		return res;
-	}
 	//update
-	sprintf(sql, updateSQL, linkage_act->lnkname, linkage_act->trgieee, linkage_act->trgep, linkage_act->trgcnd, linkage_act->lnkact,
-			linkage_act->enable, linkage_act->actobj, linkage_act->urlstring, linkage_act->lid);
+	sprintf(sql, updateSQL, linkage_act->lnk_base.lnkname, linkage_act->lnk_base.trgieee, linkage_act->lnk_base.trgep,
+			linkage_act->lnk_base.trgcnd, linkage_act->lnk_base.lnkact, linkage_act->lnk_base.enable,
+			linkage_act->lnk_condition.attribute, linkage_act->lnk_condition.operator, linkage_act->lnk_condition.value,
+			linkage_act->urlobject.actobj, linkage_act->urlobject.urlstring, linkage_act->lnk_base.lid);
 
+
+//	printf("%s\n",sql);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
-		db_close();
 		return res;
 	}
-	//关闭数据库
-	db_close();
+
 	return (res = 0);
 }
-/*
- * function: del_linkage_db()
- * description: del_linkage_db
- * input:
- * output:
- * return: 0-ok, <0-failed
- * others:
- * */
 int del_linkage_db(int id_value)
 {
 	int res;
 	const char* deleteSQL = "DELETE FROM t_linkage WHERE lid = %d";
-	char sql[256];
+	char sql[SQL_STRING_MAX_LEN];
 
-	//准备
-	res = db_init();
-	if(res<0){
-		db_close();
-		return res;
-	}
 	//delete t_linkage by lid
 	sprintf(sql, deleteSQL, id_value);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
-		db_close();
 		return res;
 	}
-	//关闭数据库
-	db_close();
+
 	return (res = 0);
 }
-/*
- * function: get_linkage_list_db()
- * description: get_linkage_list_db
- * input:
- * output:
- * return: 0-ok, <0-failed
- * others:
- * */
-int get_linkage_list_db(linkage_st *linkage_act)
+int get_linkage_base_all_list_db(linkage_base_st **linkage_act, int *total_num)
+{
+	int res;
+	char sql[] = "SELECT lid,lnkname,trgieee,trgep,trgcnd,lnkact,enable FROM t_linkage order by lid";
+
+	char *errmsg;
+	char **result;
+	int j;
+	int row, col, index;
+
+
+    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){
+		URLAPI_DEBUG("read db failed:%s\n",errmsg);
+		return (res = ERROR_READ_DB);
+    }
+    URLAPI_DEBUG("row=%d,col=%d\n",row,col);
+    //generate scene_base
+    *linkage_act = (linkage_base_st *)malloc(row*sizeof(linkage_base_st)); //need to free in outside
+	if(*linkage_act == NULL){
+		URLAPI_DEBUG("malloc error\n");
+		sqlite3_free_table(result);
+		return (res = ERROR_OTHER);
+	}
+
+	*total_num = row;		//赋list总数
+ 	index = col;
+	for(j=0; j<row; j++){
+		((*linkage_act)[j]).lid = atoi(result[index]);
+		strcpy(((*linkage_act)[j]).lnkname, result[index+1]);
+		strcpy(((*linkage_act)[j]).trgieee, result[index+2]);
+		strcpy(((*linkage_act)[j]).trgep, result[index+3]);
+		strcpy(((*linkage_act)[j]).trgcnd, result[index+4]);
+		strcpy(((*linkage_act)[j]).lnkact, result[index+5]);
+		((*linkage_act)[j]).enable = atoi(result[index+6]);
+		index += col;
+	}
+
+	//free
+	sqlite3_free_table(result);
+	return 0;
+}
+int enable_linkage_db(char *sql)
 {
 	int res;
 
-	//准备
-	res = db_init();
+	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
-		db_close();
 		return res;
 	}
-	//res = t_linkage_get_allist(db, linkage_act);
-	if(res<0){
-		db_close();
-		return res;
-	}
-	//关闭数据库
-	db_close();
+
 	return (res = 0);
 }
 /*
@@ -1442,27 +1429,27 @@ int get_linkage_list_db(linkage_st *linkage_act)
  * return: 0-ok, <0-failed
  * others:
  * */
-int read_linkage_url_db(int id, char *urlstring)
-{
-	int res;
-	const char *qsql ="SELECT urlstring FROM t_linkage WHERE lid=%d";
-	char sql[256];
-	sprintf(sql, qsql, id);
-
-	//准备
-	res = db_init();
-	if(res<0){
-		db_close();
-		return res;
-	}
-	//read t_scene_act
-	res = t_getact_per(sql, urlstring);
-	if(res<0){
-		db_close();
-		return res;
-	}
-	//关闭数据库
-	db_close();
-	return (res = 0);
-}
+//int read_linkage_url_db(int id, char *urlstring)
+//{
+//	int res;
+//	const char *qsql ="SELECT urlstring FROM t_linkage WHERE lid=%d";
+//	char sql[256];
+//	sprintf(sql, qsql, id);
+//
+//	//准备
+//	res = db_init();
+//	if(res<0){
+//		db_close();
+//		return res;
+//	}
+//	//read t_scene_act
+//	res = t_getact_per(sql, urlstring);
+//	if(res<0){
+//		db_close();
+//		return res;
+//	}
+//	//关闭数据库
+//	db_close();
+//	return (res = 0);
+//}
 /**********************************************************************************************/

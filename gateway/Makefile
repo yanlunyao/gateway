@@ -7,7 +7,8 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		net_stat bind_daemon \
 		timingloop_daemon \
 		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi  \
-		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi
+		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi \
+		AddLinkage.cgi
 
 all:	${PROGS}
 
@@ -55,7 +56,7 @@ bind_daemon: bind_daemon.o cJSON.o
 siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
 
-#################################################################################################################################   //scene cgi
+#####################################################################################   //scene cgi
 #AddScene
 AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
 		${CC} ${CFLAGS} -o $@ addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
@@ -82,7 +83,7 @@ DoScene.cgi:	doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o glCalkPr
 ModifySceneIndex.cgi:	modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o
 		${CC} ${CFLAGS} -o $@ modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o ${LIBS} -lm -lsqlite3
 
-#################################################################################################################################   //timeaction cgi
+##############################################################################################   //timeaction cgi
 #AddTimeAction
 AddTimeAction.cgi:	addTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o
 		${CC} ${CFLAGS} -o $@ addTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o ${LIBS} -lm -lsqlite3
@@ -99,9 +100,29 @@ GetTimeActionList.cgi:	getTimeActionList.o cgic.o cJSON.o sqliteOperator.o glCal
 EnableTimeAction.cgi:	enableTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o
 		${CC} ${CFLAGS} -o $@ enableTimeAction.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o ${LIBS} -lm -lsqlite3
 
+##############################################################################################   //linkage cgi
+#AddLinkage.cgi
+AddLinkage.cgi:	addLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ addLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o timingCommon.o ${LIBS} -lm -lsqlite3
+#EditLinkage.cgi
+EditLinkage.cgi:	editLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ editLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o timingCommon.o ${LIBS} -lm -lsqlite3
+#DelLinkage.cgi
+DelLinkage.cgi:	delLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ delLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o timingCommon.o ${LIBS} -lm -lsqlite3
+
+#GetLinkageList.cgi
+GetLinkageList.cgi:	getLinkageList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ getLinkageList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o ${LIBS} -lm -lsqlite3
+
+#EnableLinkage.cgi
+EnableLinkage.cgi:	enableLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ enableLinkage.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o timingCommon.o ${LIBS} -lm -lsqlite3
+
+########################################test################################################
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
-########################################test################################################
+
 #timingloop_daemon
 timingloop_daemon:	timingLoop_daemon.o cJSON.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o
 		${CC} ${CFLAGS} -o $@ timingLoop_daemon.o cJSON.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o ${LIBS} -lm -lsqlite3

@@ -128,6 +128,9 @@ struct client_admin_msgbuf {
 #define LINKAGE_ACT_LEN				40
 #define PARA3_LEN					7
 #define ACTPARA_LEN					40
+#define ATTRIBUTE_LEN				10
+#define REL_OPERATOR_LEN			2
+#define TRIGGER_CONDITION_LEN		30
 #define DELAY_OR_REPEAT_TIME_FLAG_LEN	PARA3_LEN
 
 //定时规则参数值
@@ -137,7 +140,7 @@ struct client_admin_msgbuf {
 #define STOP_TIMEACTION				DISABLE
 #define TIME_ACTION_REPEAT_ENABLE	ENABLE
 #define	TIME_ACTION_REPEAT_DISABLE	DISABLE
-#define TID_MAX			30
+#define TID_MAX			100
 
 //scene
 #if 1
@@ -181,11 +184,12 @@ typedef struct{
 	scene_action_st *scene_action;
 }scene_st;
 
-//time action
+
 typedef struct{
 	char urlstring[URL_STRING_LEN];
 	char actobj[IEEE_LEN];
 }url_act_st;
+//time action
 typedef struct{
 	int  tid;
 	char actname[NAME_STRING_LEN];
@@ -206,22 +210,30 @@ typedef struct{
 	char excute_time[OUT_TIME_FORMAT_LEN];
 	char repeat;	//1~repeat, 0~not repeat
 	char process_time[DELAY_OR_REPEAT_TIME_FLAG_LEN]; //表示每周重复时间设置或延时时间
-}time_list_st;
+}time_list_st; //定时主循环模块用到的结构体
 typedef struct{
 	int list_total;
 	time_action_base_st *time_action_base;
 }time_action_alllist_st;
-//linkage
 typedef struct{
 	int  lid;
-	char lnkname[NAME_STRING_LEN];
-	char trgieee[IEEE_LEN];
-	char trgep[2];
-	char trgcnd[30];
-	char lnkact[40];
-	int enable;
-	char actobj[IEEE_LEN];
-	char urlstring[URL_STRING_LEN];
+	char lnkname[NAME_STRING_LEN+1];
+	char trgieee[IEEE_LEN+1];
+	char trgep[2+1];
+	char trgcnd[TRIGGER_CONDITION_LEN+1];
+	char lnkact[ACTPARA_LEN+1];
+	char enable;
+}linkage_base_st;
+typedef struct{
+	char attribute[ATTRIBUTE_LEN]; //属性
+	char operator[REL_OPERATOR_LEN];		//运算符
+	int value;			//值
+}linkage_trgcnd_st;
+//linkage
+typedef struct{
+	linkage_base_st lnk_base;
+	linkage_trgcnd_st lnk_condition;
+	url_act_st urlobject;
 }linkage_st;
 /************************************************************************************/
 

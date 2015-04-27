@@ -36,5 +36,10 @@ int do_time_action_db(int id, int enable);
 int time_action_get_enable_list(time_list_st *list);
 int time_action_get_time_list_st_byid(int id, time_list_st *list_member);
 //linkage
+int add_linkage_db(int *id_value, const linkage_st *linkage_act);
+int edit_linkage_db(const linkage_st *linkage_act);
+int del_linkage_db(int id_value);
+int get_linkage_base_all_list_db(linkage_base_st **linkage_act, int *total_num);
+int enable_linkage_db(char *sql);
 
 #endif /* SQLITEOPERATOR_H_ */

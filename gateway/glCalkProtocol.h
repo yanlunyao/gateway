@@ -63,6 +63,8 @@ int cJsonScene_callback(char *text, const scene_base_st *scene, const char *sind
 int cJsonDelDoScene_callback(char *text, int sid, int subid, int res);
 int cJsonTimeAction_callback(char *text, int subid, int res, int id_value, const time_action_base_st *time_act);
 int cJsonEnableTimeAction_callback(char *text, int subid, int res, int id_value, int do_status);
+int cJsonLinkage_callback(char *text, int subid, int res, int id_value, const linkage_base_st *link_base);
+int cJsonEnableLinkage_callback(char *text, int subid, int res, int id_value, int enable);
 
 #endif /* GLPROTOCOL_H_ */
 
