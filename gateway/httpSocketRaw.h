@@ -10,6 +10,6 @@
 #ifndef HTTPSOCKETRAW_H_
 #define HTTPSOCKETRAW_H_
 
-int http_get_method_by_socket(const char *urlstring);
+pid_t execute_url_action(int table_flag, int id_value);
 
 #endif /* HTTPSOCKETRAW_H_ */
