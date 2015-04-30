@@ -83,6 +83,10 @@ int cgiMain()
 	//read sid
 	cgi_re = cgiFormInteger("sid", &scene_base.sid, 0);
 
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	//generate scene_action_st
 	scene_action = scnaction_st_gener_malloc(scene_base.scnaction);							//malloc1
 	if(scene_action == NULL){
@@ -97,7 +101,7 @@ int cgiMain()
 	}
 
 all_over:
-
+	db_close();
     if(res<0){
     	scene_base_st *p;
     	p = &scene_base;

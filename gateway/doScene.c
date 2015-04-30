@@ -45,20 +45,20 @@ static void api_response(int res, int sid)
     fprintf(cgiOut,"%s\n", json_out);
     free(json_out);
 }
-int http_make(char *urlstring)
-{
-	int res;
-	pid_t	pid;
-	if ( (pid = fork()) > 0)
-		return(pid);		/* parent */
-
-	res = http_make_start();
-	if(res <0)
-		exit(1);
-	http_sysc_get(urlstring);
-	http_make_over();
-	exit(1);
-}
+//int http_make(char *urlstring)
+//{
+//	int res;
+//	pid_t	pid;
+//	if ( (pid = fork()) > 0)
+//		return(pid);		/* parent */
+//
+//	res = http_make_start();
+//	if(res <0)
+//		exit(1);
+//	http_sysc_get(urlstring);
+//	http_make_over();
+//	exit(1);
+//}
 int cgiMain()
 {
 	char send_cb_string[GL_CALLBACK_MAX_SIZE];
@@ -78,16 +78,20 @@ int cgiMain()
 	//read sid
 	cgi_re = cgiFormInteger("sid", &sid, 0);
 
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	if((sid == ALL_BYPASS)||(sid == ALL_UNBYPASS)){
 
 		res = http_make_all_bypass(sid);
-		goto all_right;
+		goto all_over;
 	}
 
 	//read database
 	res = read_scene_act_db(sid, &acturl);
 	if(res <0){
-		goto all_right;
+		goto all_over;
 	}
 	for (i = 0; i < acturl[0].urltotal; i++){
 		http_do_scene_by_socket(acturl[i].urlstring);
@@ -107,7 +111,8 @@ int cgiMain()
 
 	//http url handle
 
-all_right:
+all_over:
+	db_close();
 	//respond
     api_response(res, sid);
 
@@ -173,6 +178,7 @@ static int http_do_scene_by_socket(const char *urlstring)
     }
     send(socket_fd, urlstring, strlen(urlstring), 0);
     close(socket_fd);
+    return 0;
 }
 static int http_make_all_bypass(int scene_id)
 {

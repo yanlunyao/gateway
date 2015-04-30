@@ -60,9 +60,14 @@ int cgiMain()
 
 	cgiHeaderContentType("application/json"); //MIME
 
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	//delete database
 	res = get_scene_db(&scene_base_list);
-
+all_over:
+	db_close();
 	//respond
     api_response(res, &scene_base_list);
 

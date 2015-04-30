@@ -50,9 +50,14 @@ int cgiMain()
 	//read sid
 	cgi_re = cgiFormInteger("sid", &sid, 0);
 
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	//delete database
 	res = del_scene_db(sid);
-
+all_over:
+	db_close();
 	//respond
     api_response(res, sid);
 
