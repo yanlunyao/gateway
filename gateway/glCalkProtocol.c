@@ -320,8 +320,6 @@ int cJsonLinkage_callback(char *text, int subid, int res, int id_value, const li
 	cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
 	cJSON_AddNumberToObject(root, GL_MAINID, MAINID_LINKAGE);
 	cJSON_AddNumberToObject(root, GL_SUBID, subid);
-	cJSON_AddNumberToObject(root, "status", res);
-
 	cJSON_AddNumberToObject(root, FIELD_STATUS, res);
 	if(res >=0){
 		cJSON_AddNumberToObject(root, FIELD_LID, id_value);

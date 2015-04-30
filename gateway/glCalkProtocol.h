@@ -53,7 +53,7 @@
 #define	GL_MODIFY_ACTION_OK		0    //modify alias or password success
 
 /*******************************************************/
-#define GL_CALLBACK_MAX_SIZE	1024
+#define GL_CALLBACK_MAX_SIZE	2048
 
 /*******************************************************/
 int push_to_CBDaemon(const char *send_text, int send_size);

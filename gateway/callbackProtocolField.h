@@ -51,8 +51,13 @@
 #define SUBID7		7
 
 //
+#define ALARM_LINKAGE_DEFAULT_V		0
+
+//
 #define GL_MSGTYPE						0
 #define DEL_DEVICE_MSGTYPE				34
+#define DEV_ATTRIBUTE_MSGTYPE			2
+#define DEV_ALARM_MSGTYPE				3
 
 //
 #define MAINID_TIMEACTION				MAINID3
@@ -71,6 +76,9 @@
 #define SUBID_DEL_LINK					SUBID3
 #define SUBID_ENABLE_LINK				SUBID4
 
+//subid scene
+#define SUBID_DEL_SCENE					SUBID3
+#define SUBID_EDIT_SCENE				SUBID2
 
 #endif /* CALLBACKPROTOCOLFIELD_H_ */
 
