@@ -16,7 +16,7 @@
 #include "callbackProtocolField.h"
 #include "glCalkProtocol.h"
 #include "timedaction.h"
-
+#include "linkageLoop.h"
 
 #define  CB_HEART_BEAT_TIME			30   //30s
 
@@ -38,15 +38,14 @@ void send_heartbeat(void* data);
 static void read_callback_data_handle(int confd);
 
 static void parse_json_callback(const char *text);
-
-static pid_t execute_url_action(int table_flag, int id_value);
-
+int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee);
 
 static void list_time_remove_member_lock(int member);
 static void list_time_reset_all_member();
 static void list_time_add_member_lock(time_list_st member);
 static char list_time_edit_member_lock(time_list_st member);
 static void list_time_remove_member_byid_lock(int id_value);
+static void list_time_printf_tid();
 //
 
 int main()
@@ -55,6 +54,7 @@ int main()
 	timed_action_t *time_action_cb;
 
 	time_loop_init();
+	linkage_head_init();
 
 	//读数据库启用的定时规则信息，保存到列表
 	if(time_action_get_enable_list(list_time) <0) {
@@ -62,13 +62,14 @@ int main()
 		GDGL_DEBUG("time action enable list read error!\n");
 		exit(1);
 	}
-//	for(i=0; i< TID_MAX; i++) {
-//		printf("list_id[%d]=%d\n", i, list_time[i].tid);
-//		printf("list_mode[%d]=%d\n", i, list_time[i].mode);
-//		printf("list_exetime[%d]=%s\n", i, list_time[i].excute_time);
-//		printf("list_repeat[%d]=%d\n", i, list_time[i].repeat);
-//		printf("list_processtime[%d]=%s\n", i, list_time[i].process_time);
-//	}
+	//读联动列表信息，保存到双向链表
+	if(linkage_get_enable_list_db(&linkage_loop_head) <0) {
+		//读表出错，程序退出
+		GDGL_DEBUG("linkage enable list read error!\n");
+		exit(1);
+	}
+	linkage_traverse_printf();
+	list_time_printf_tid();
 	//新开线程，循坏检测定时列表。触发定时操作后，列表需更新（列表需要加锁？）
 	Pthread_create(&timeloop_thread_id, NULL, time_loop_main, NULL);
 
@@ -138,7 +139,7 @@ static void *time_loop_main(void *arg)
 				list_time_remove_member_lock(i); //add mulex lock
 				//disable the tid in the database and send calkback
 				do_time_action_db(temp_id, STOP_TIMEACTION);
-				if((send_cb_len = cJsonEnableTimeAction_callback(send_cb_string, ENABLE_TA_SUBID, 0, temp_id, STOP_TIMEACTION)) >=0) {
+				if((send_cb_len = cJsonEnableTimeAction_callback(send_cb_string, ENABLE_TA_SUBID, 1, temp_id, STOP_TIMEACTION)) >=0) {
 					push_to_CBDaemon(send_cb_string, send_cb_len);
 				}
 				time_rule_over_flag = 0;
@@ -257,7 +258,7 @@ static void read_callback_data_handle(int confd)
 			return;		/* connection closed by other end */
 		}
 		read_data[nread] = '\0'; // add null
-		GDGL_DEBUG("read data: %s\n", read_data);
+		//GDGL_DEBUG("read data: %s\n", read_data);
 		//parse json
 		parse_json_callback(read_data);
 	}
@@ -267,7 +268,11 @@ static void parse_json_callback(const char *text)
 	cJSON *root;
 	cJSON *json_temp;
 	int msgtype, mainid, subid,status, id_value, enable;
+	char *dev_ieee, *dev_ep, *attrname;
+	int attr_value;
+
 	time_list_st temp_member;
+	linkage_loop_st link_member;
 
 	// parse request string
 	root = cJSON_Parse(text);
@@ -284,7 +289,7 @@ static void parse_json_callback(const char *text)
     }
     msgtype = json_temp->valueint;
     switch (msgtype) {
-    	case GL_MSGTYPE:
+    	case GL_MSGTYPE:										//gl的msgtype
 	    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有广联msgtype都有status字段才可以这样做
 			if (!json_temp)
 			{
@@ -305,7 +310,7 @@ static void parse_json_callback(const char *text)
     	    	cJSON_Delete(root);
     	    	return;
     	    }
-    	    mainid = json_temp->valueint;
+    	    mainid = json_temp->valueint;					//解析mainid
     	    switch (mainid) {
     	    	case MAINID_TIMEACTION:
     	    		json_temp = cJSON_GetObjectItem(root, FIELD_TID);
@@ -315,7 +320,7 @@ static void parse_json_callback(const char *text)
 						cJSON_Delete(root);
 						return;
 					}
-        	    	id_value = json_temp->valueint;
+        	    	id_value = json_temp->valueint;			//解析tid（time action）
     	    		json_temp = cJSON_GetObjectItem(root, FIELD_SUBID);
     	    	    if (!json_temp)
     	    	    {
@@ -323,7 +328,7 @@ static void parse_json_callback(const char *text)
     	    	    	cJSON_Delete(root);
     	    	    	return;
     	    	    }
-    	    	    subid = json_temp->valueint;
+    	    	    subid = json_temp->valueint;			//解析subid（time action）
     	    	    switch(subid) {
     	    	    	case SUBID_ADD_TA:
     	       	    		json_temp = cJSON_GetObjectItem(root, FIELD_ENABLE);
@@ -364,6 +369,7 @@ static void parse_json_callback(const char *text)
     	    	    	break ;
     	    	    	case SUBID_DEL_TA:
     	    	    		list_time_remove_member_byid_lock(id_value);
+    	    	    		list_time_printf_tid();
     	    	    	break;
     	    	    	case SUBID_ENABLE_TA:
     	       	    		json_temp = cJSON_GetObjectItem(root, FIELD_ENABLE);
@@ -392,47 +398,165 @@ static void parse_json_callback(const char *text)
     	    	break;
 
     	    	case MAINID_LINKAGE:
+					json_temp = cJSON_GetObjectItem(root, FIELD_LID);
+					if(!json_temp) {
+						GDGL_DEBUG("json parse error\n");
+						cJSON_Delete(root);
+						return;
+					}
+					id_value = json_temp->valueint;			//解析lid(linkage)
+					json_temp = cJSON_GetObjectItem(root, FIELD_SUBID);
+					if(!json_temp) {
+						GDGL_DEBUG("json parse error\n");
+						cJSON_Delete(root);
+						return;
+					}
+					subid = json_temp->valueint;			//解析subid(linkage)
+					switch(subid) {
+						case SUBID_ADD_LINK:
+	   	       	    		json_temp = cJSON_GetObjectItem(root, FIELD_ENABLE);
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							enable = json_temp->valueint;
+							if(enable == ENABLE) {
+								if(get_linkage_list_member_byid(id_value, &link_member) >=0) {
+									list_linkage_add_member(link_member);
+								}
+							}
+						break;
+						case SUBID_EDIT_LINK:
+	   	       	    		json_temp = cJSON_GetObjectItem(root, FIELD_ENABLE);
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							enable = json_temp->valueint;
+							if(enable == ENABLE) {
+								if(get_linkage_list_member_byid(id_value, &link_member) >=0) {
+									if(list_linkage_edit_member(link_member) == 0) {
+										list_linkage_add_member(link_member);
+									}
+								}
+							}
+							else if(enable == DISABLE) {
+								list_linkage_remove_member_byid(id_value);
+							}
+							else{}
+						break;
+						case SUBID_DEL_LINK:
+							list_linkage_remove_member_byid(id_value);
+							list_time_printf_tid();
+						break;
+						case SUBID_ENABLE_LINK:
+    	       	    		json_temp = cJSON_GetObjectItem(root, FIELD_ENABLE);
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							enable = json_temp->valueint;
+							if(enable == ENABLE) {
+								if(get_linkage_list_member_byid(id_value, &link_member) >=0) {
+									if(list_linkage_edit_member(link_member) == 0) {
+										list_linkage_add_member(link_member);
+									}
+								}
+							}
+							else if(enable == DISABLE) {
+								list_linkage_remove_member_byid(id_value);
+							}
+							else{}
+						break;
+						default:break;
+					}
     	    	break;
     	    	default:break;
     	    }
     	break;
+    	case DEV_ATTRIBUTE_MSGTYPE:
+			json_temp = cJSON_GetObjectItem(root, "deviceIeee");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ieee = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "deviceEp");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ep = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "attributename");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			attrname = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "value");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			attr_value = atoi(json_temp->valuestring);
+			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+    	break;
+    	case DEV_ALARM_MSGTYPE:
+			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ieee = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "zone_ep");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ep = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "w_description");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			attrname = json_temp->valuestring;
+			attr_value = ALARM_LINKAGE_DEFAULT_V;
+			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+    	break;
     	case DEL_DEVICE_MSGTYPE:
+			json_temp = cJSON_GetObjectItem(root, "IEEE");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ieee = json_temp->valuestring;
+    		del_dev_trigger_del_relevant_rule(dev_ieee);
 		break;
     	default:break;
     }
 	cJSON_Delete(root);
-}
-static pid_t execute_url_action(int table_flag, int id_value)
-{
-	char sql[SQL_STRING_MAX_LEN];
-	int res;
-	char urlstring[URL_STRING_LEN];
-
-	pid_t	pid;
-	if ( (pid = fork()) > 0)
-		return(pid);		/* parent */
-
-	switch (table_flag)
-	{
-		case TIME_ACTION_TABLE_FLAG:
-			sprintf(sql, "SELECT urlstring FROM t_time_action WHERE tid=%d", id_value);
-			break;
-
-		case LINkAGE_TABLE_FLAG:
-			sprintf(sql, "SELECT urlstring FROM t_linkage WHERE lid=%d", id_value);
-			break;
-		default :
-			GDGL_DEBUG("table flag error\n");
-			exit(1);
-			break;
-	}
-	res = t_getact_per(sql, urlstring);
-	GDGL_DEBUG("sql: %s, the url string will be execute is: %s\n", sql, urlstring);
-	if(res ==0) {
-		res = http_get_method_by_socket(urlstring);
-	}
-	exit(0);
-	return 0;
 }
 /*
  * this fuction remove the member of the list_time[member]
@@ -500,6 +624,19 @@ static void list_time_reset_all_member()
 		list_time[i].tid = -1;		//初始化列表
 	}
 }
+static void list_time_printf_tid()
+{
+	int i;
+	for(i=0; i< TID_MAX; i++) {
+		if(list_time[i].tid ==-1)
+			continue;
+		printf("list_id[%d]=%d\n", i, list_time[i].tid);
+//		printf("list_mode[%d]=%d\n", i, list_time[i].mode);
+//		printf("list_exetime[%d]=%s\n", i, list_time[i].excute_time);
+//		printf("list_repeat[%d]=%d\n", i, list_time[i].repeat);
+//		printf("list_processtime[%d]=%s\n", i, list_time[i].process_time);
+	}
+}
 void send_heartbeat(void* data)
 {
 	int fd = *(int *)data;
@@ -511,3 +648,71 @@ void send_heartbeat(void* data)
 		return;
     }
 }
+#define DEL_ID_MAX	100 //删除设备同时允许影响最多的id数目
+int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
+{
+	int will_del_id[DEL_ID_MAX] = {0};
+	char send_cb_string[GL_CALLBACK_MAX_SIZE];
+	int send_cb_len;
+	int i;
+
+	pid_t	pid;
+	if ((pid = fork()) > 0) {
+		waitpid(-1,NULL,0);
+		return(pid);		//parent process
+	}
+	if ((pid = fork()) > 0) {
+		exit(0);			//child process
+		return (pid);
+	}
+							//grandson process
+	//判断是否在定时规则里
+	if(del_timeaction_by_isdeletedieee(will_del_id, isdeleted_ieee) >0) {
+		for(i=0; i<DEL_ID_MAX; i++) {
+			if(will_del_id[i] == 0)
+				break;
+			GDGL_DEBUG("will del id:%d\n",will_del_id[i]);
+			if((send_cb_len = cJsonTimeAction_callback(send_cb_string, SUBID_DEL_TA, 1, will_del_id[i], NULL)) >=0) {
+				push_to_CBDaemon(send_cb_string, send_cb_len);
+				usleep(300000); //300ms //发送太快调试工具接收不到
+				GDGL_DEBUG("send tima success\n");
+			}
+		}
+	}
+	memset(will_del_id, 0, DEL_ID_MAX);
+	//判断是否在场景规则里
+	if(del_scene_by_isdeletedieee(will_del_id, isdeleted_ieee) >0) {
+		scene_base_st base_buf;
+		for(i=0; i<DEL_ID_MAX; i++) {
+			if(will_del_id[i] == 0)
+				break;
+			GDGL_DEBUG("will del id:%d\n",will_del_id[i]);
+			if(read_t_scene_base_byid(&base_buf, will_del_id[i]) <0) {
+				continue;
+			}
+			if((send_cb_len = cJsonScene_callback(send_cb_string, &base_buf, NULL, NULL, SUBID_EDIT_SCENE, 1)) >=0) {
+				push_to_CBDaemon(send_cb_string, send_cb_len);
+				usleep(300000); //300ms //发送太快调试工具接收不到
+				GDGL_DEBUG("send scene success\n");
+			}
+		}
+	}
+	memset(will_del_id, 0, DEL_ID_MAX);
+	//判断是否在联动规则里
+	if(del_linkage_by_isdeletedieee(will_del_id, isdeleted_ieee) >0) {
+		for(i=0; i<DEL_ID_MAX; i++) {
+			if(will_del_id[i] == 0)
+				break;
+			GDGL_DEBUG("will del id:%d\n",will_del_id[i]);
+			if((send_cb_len = cJsonLinkage_callback(send_cb_string, SUBID_DEL_LINK, 1, will_del_id[i], NULL)) >=0) {
+				push_to_CBDaemon(send_cb_string, send_cb_len);
+				usleep(300000); //300ms //发送太快调试工具接收不到
+				GDGL_DEBUG("send linkage success\n");
+			}
+		}
+	}
+	GDGL_DEBUG("over\n");
+	exit(0);
+	return 0;
+}
+
