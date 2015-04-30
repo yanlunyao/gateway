@@ -12,6 +12,7 @@
 
 void gl_time_format_convert_to_system_tm(const char *gl_time_format, struct tm* store_time_tm);
 void system_tm_convert_to_gl_time_format(const struct tm* time_tm, char *store_gl_time);
+void get_current_time_gl_format(char *current_gl_time);
 
 
 #endif /* TIMINGCOMMON_H_ */

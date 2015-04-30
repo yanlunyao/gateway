@@ -76,6 +76,16 @@ void delay_enrolltime_to_excutetime(char *gl_time, char *delay_sec)
 	system_tm_convert_to_gl_time_format(&exetime_tm, gl_time);//tm convert to gl time format
 
 }
+//获取当前时间转换成gl的时间格式
+void get_current_time_gl_format(char *current_gl_time)
+{
+	time_t calendar;
+	struct tm time_tm;
+
+	calendar = time(NULL);
+	localtime_r(&calendar, &time_tm);
+	system_tm_convert_to_gl_time_format(&time_tm, current_gl_time);
+}
 int compare_time_tm(const struct tm *first, const struct tm *second)
 {
 	return 0;
