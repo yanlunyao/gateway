@@ -26,6 +26,7 @@ int del_scene_db(int sid);
 int get_scene_db(scene_base_list_st *scene_base_list);
 int read_scene_act_db(int sid, url_string_st **acturl);
 int modify_scene_index(const int *idall, const int *indexall, int cnt);
+int read_t_scene_base_byid(scene_base_st *base, int id);
 //time
 int add_timeaction_db(int *id_value, const time_action_st *time_act);
 int edit_timeaction_db(const time_action_st *time_act);
@@ -41,5 +42,12 @@ int edit_linkage_db(const linkage_st *linkage_act);
 int del_linkage_db(int id_value);
 int get_linkage_base_all_list_db(linkage_base_st **linkage_act, int *total_num);
 int enable_linkage_db(char *sql);
+int linkage_get_enable_list_db(list_linkage_st *head);
+int get_linkage_list_member_byid(int id, linkage_loop_st *member);
+
+//
+int del_timeaction_by_isdeletedieee(int *id, const char *del_ieee);
+int del_scene_by_isdeletedieee(int *id, const char *del_ieee);
+int del_linkage_by_isdeletedieee(int *id, const char *del_ieee);
 
 #endif /* SQLITEOPERATOR_H_ */
