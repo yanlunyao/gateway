@@ -47,9 +47,6 @@ int cgiMain()
 	cgi_re = cgiFormInteger(FIELD_ENABLE, &enable_flag, 0);
 	lnk_st.lnk_base.enable = (char)enable_flag;
 
-//	URLAPI_DEBUG("%s,%s,%s,%s,%s,%d\n", lnk_st.lnk_base.lnkname, lnk_st.lnk_base.trgieee, lnk_st.lnk_base.trgep,
-//			lnk_st.lnk_base.trgcnd,lnk_st.lnk_base.lnkact,lnk_st.lnk_base.enable);
-
 	res = gnerate_per_urlobj(&lnk_st.urlobject, lnk_st.lnk_base.lnkact);
 	if(res <0){
 		goto all_over;
