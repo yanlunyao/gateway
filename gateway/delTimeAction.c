@@ -29,13 +29,17 @@ int cgiMain()
 
 	cgi_re = cgiFormInteger("tid", &tid, 0);
 
-//	delete database
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
+
 	res = del_timeaction_db(tid);
 	if(res<0){
 		goto all_over;
 	}
 all_over:
-
+	db_close();
     //all right
     api_response(res, tid, NULL);
     //push to cb_daemon

@@ -35,14 +35,16 @@ int cgiMain()
 
 	cgiHeaderContentType("application/json"); //MIME
 
-//	delete database
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	res = get_timeaction_list_db(&ta_list.time_action_base, &ta_list.list_total);							//malloc
 	if(res<0){
 		goto all_over;
 	}
 all_over:
-
-    //all right
+	db_close();
     api_response(res, &ta_list);
 
 	//free

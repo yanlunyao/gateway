@@ -37,6 +37,10 @@ int cgiMain()
 	cgi_re = cgiFormInteger("enable", &time_act.ta_base.enable, 0);
 	cgi_re = cgiFormInteger("tid", &time_act.ta_base.tid, 0);
 
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	//generate
 	res = gnerate_per_urlobj(&time_act.urlobject, time_act.ta_base.actpara);
 	if(res <0){
@@ -48,8 +52,7 @@ int cgiMain()
 		goto all_over;
 	}
 all_over:
-
-    //all right
+	db_close();
     api_response(res, time_act.ta_base.tid, &time_act.ta_base);
     //push to cb_daemon
 	if((send_cb_len = cJsonTimeAction_callback(send_cb_string, EDIT_TA_SUBID, res, time_act.ta_base.tid, &time_act.ta_base)) >=0) {
