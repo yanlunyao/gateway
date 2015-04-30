@@ -150,14 +150,16 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 
 		case URL_TYPE_ALL_BYPASS:
 
-			if(para_cnt !=1 )
+			if(para_cnt !=3 )
 				return URL_PARA_NUM_ERROR;
 
-			p1 = (char *)para;				//0-allbypass, 1-allunbypass
+			p1 = (char *)para;				//ieee string
+			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
+			p3 = p2+ strlen(p2) +1;	//0-allbypass, 1-allunbypass
 
-			if(atoi(p1) == OPT_ALLUNBYPASS)
+			if(atoi(p3) == OPT_ALLUNBYPASS)
 				status = 7;
-			else if(atoi(p1) == OPT_ALLBYPASS)
+			else if(atoi(p3) == OPT_ALLBYPASS)
 				status = 6;
 			else
 				return URL_PARA_NUM_ERROR;
@@ -165,7 +167,7 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			nwrite = snprintf(url, URL_STRING_LEN, "GET /cgi-bin/rest/network/localIASCIEOp"
 					"eration.cgi?operatortype=%d&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", status);//7-allbypass,6-allunbypass
 
-			actobj= NULL;
+			snprintf(actobj, IEEE_LEN+1, p1);
 			break;
 
 		case URL_TYPE_OUTLET:
@@ -249,6 +251,9 @@ scene_action_stPtr scnaction_st_gener_malloc(const char *text)
 
     for (copy_ptr = copy; copy_ptr< (copy + copy_len);) {
 
+    	//add150429
+    	snprintf(action[i].actpara, ACTPARA_LEN+1, copy_ptr);
+    	//
     	actpara = acttype = copy_ptr;
         for (copy_ptr += strlen(copy_ptr); copy_ptr < (copy +copy_len) && !*copy_ptr; copy_ptr++);
         acttype = strsep(&actpara,":");							//分割':', only once
