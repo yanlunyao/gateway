@@ -28,3 +28,6 @@ clientadmin_daemon
 /sqliteOperator_backup150410.c
 /timerActionLoop
 /bind_daemon
+/listtest
+/list_test
+/list_test.c
