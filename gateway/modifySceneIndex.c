@@ -57,6 +57,10 @@ int cgiMain()
 	cgi_re = cgiFormString("scnindexall", index_org, 100);
 	strcpy(indexall, index_org);
 
+	res = db_init();
+	if(res<0){
+		goto all_over;
+	}
 	//strsep idall and indexall
 	char *p_id, *p_index;
 	int idcnt=0, indexcnt=0;
@@ -87,6 +91,7 @@ int cgiMain()
 	}
 
 all_over:
+	db_close();
     api_response(res, id_org, index_org);
     //push to cb_daemon
 #ifdef NO_CALLBAK_DEBUG
