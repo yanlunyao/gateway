@@ -15,6 +15,8 @@
 #ifndef SMARTGATEWAY_H__
 #define SMARTGATEWAY_H__
 
+
+#include "list.h"
 #define SMARTGATEWAY_DEBUG
 #include <stdio.h>	
 #ifdef SMARTGATEWAY_DEBUG
@@ -117,9 +119,10 @@ struct client_admin_msgbuf {
 #define ERROR_WRITE_DB					-4
 #define ERROR_MDFY_NO_ID_DB 			-5
 #define ERROR_PARAMETER_INVALID			-6
-#define	ERROR_GENERATE_URL_STRING		-7
+//#define	ERROR_GENERATE_URL_STRING		-7  //组合urlstring失败，可能是因为malloc失败，或者参数不对。
+#define	ERROR_GENERATE_URL_STRING		ERROR_PARAMETER_INVALID
 #define ERROR_HTTP_INVOKE				-8	//
-#define ERROR_OTHER						-9  //其它错误，比如分配内存失败的情况
+#define ERROR_OTHER						-7  //其它错误，比如分配内存失败的情况
 
 #define NAME_STRING_LEN				30
 #define URL_STRING_LEN				200
@@ -128,9 +131,9 @@ struct client_admin_msgbuf {
 #define LINKAGE_ACT_LEN				40
 #define PARA3_LEN					7
 #define ACTPARA_LEN					40
-#define ATTRIBUTE_LEN				10
+#define ATTRIBUTE_LEN				30
 #define REL_OPERATOR_LEN			2
-#define TRIGGER_CONDITION_LEN		30
+#define TRIGGER_CONDITION_LEN		ATTRIBUTE_LEN+10
 #define DELAY_OR_REPEAT_TIME_FLAG_LEN	PARA3_LEN
 
 //定时规则参数值
@@ -142,53 +145,45 @@ struct client_admin_msgbuf {
 #define	TIME_ACTION_REPEAT_DISABLE	DISABLE
 #define TID_MAX			100
 
+//场景规则参数值
+#define SCENEACTION_MAX_LEN		200
+
+//联动规则参数值
+//eq-等于；bt-大于；lt-小于；be-大于等于；le-小于等于
+
+//COMMON
+typedef struct{
+	char urlstring[URL_STRING_LEN];
+	char actobj[IEEE_LEN];
+}url_act_st;
+
 //scene
-#if 1
 typedef struct{
 	int sid;
 	char scnname[NAME_STRING_LEN];
 	int scnindex;
-	char scnaction[100];
+	char scnaction[SCENEACTION_MAX_LEN];
 }scene_base_st, *scene_base_stPtr;
-
 typedef struct{
 	int list_total;
 	scene_base_stPtr scene_base;
 }scene_base_list_st;
-
 typedef struct{
 //	int sid;
 	char acttotal;     							//总操作的个数
-	char actobj[IEEE_LEN];						//操作对象
-	char urlstring[URL_STRING_LEN];				//操作url串
+	char actobj[IEEE_LEN+1];						//操作对象
+	char urlstring[URL_STRING_LEN+1];				//操作url串
+	char actpara[ACTPARA_LEN+1];
 }scene_action_st, *scene_action_stPtr;
 typedef struct{
 	int urltotal;     							//总操作的个数
 	char urlstring[URL_STRING_LEN];				//操作url串
 }url_string_st;
-#else
-typedef struct{
-	int sid;
-	char scnname[NAME_STRING_LEN];
-	char scnindex[10];  //存入数据库是int型，4个字节大小
-	char *scnaction;
-}scene_base_st;
-typedef struct{
-	//int sid;
-	char actobj[IEEE_LEN];
-	char *urlstring;
-}scene_action_st, *scene_action_stPtr;
-#endif
 typedef struct{
 	scene_base_st scene_base;
 	scene_action_st *scene_action;
 }scene_st;
 
-
-typedef struct{
-	char urlstring[URL_STRING_LEN];
-	char actobj[IEEE_LEN];
-}url_act_st;
 //time action
 typedef struct{
 	int  tid;
@@ -235,6 +230,21 @@ typedef struct{
 	linkage_trgcnd_st lnk_condition;
 	url_act_st urlobject;
 }linkage_st;
+typedef struct
+{
+	int lid;
+	char trgieee[IEEE_LEN+1];
+	char trgep[2+1];
+	char attribute[ATTRIBUTE_LEN+1]; //属性
+	char operator[REL_OPERATOR_LEN+1];		//运算符
+	int value;			//值
+}linkage_loop_st;
+typedef struct
+{
+	linkage_loop_st linkage_member;
+	struct list_head list;
+}list_linkage_st;
+
 /************************************************************************************/
 
 #endif //SMARTGATEWAY_H__
