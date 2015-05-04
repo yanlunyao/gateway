@@ -8,10 +8,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <time.h>
 
 #include "sqliteWrap.h"
 #include "sqliteOperator.h"
+#include "timingCommon.h"
 
 sqlite3 * db=NULL;
 
@@ -413,10 +415,21 @@ int t_getact_per(const char *sql, char *urlstring)
 	char *errmsg;
 	char **result;
 	int row, col, index;
+	int repeat_cnt = 0;
 
-    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
-		URLAPI_DEBUG("read db failed:%s\n",errmsg);
-		return (res = ERROR_READ_DB);
+    if( (res = sqlite3_get_table(db, sql, &result, &row, &col, &errmsg))!= SQLITE_OK){  //need to free result
+    	while(res == SQLITE_BUSY) {
+    		repeat_cnt++;
+    		if(repeat_cnt >DB_BUSY_REPEAT_CNT)
+    			break;
+    		usleep(DB_BUSY_WAIT_TIME*1000); //5ms
+    		printf("#\n");
+    		res = sqlite3_get_table(db, sql, &result, &row, &col, &errmsg);
+    	}
+    	if(res !=SQLITE_OK) {
+			GDGL_DEBUG("read db failed:%s\n",errmsg);
+			return (res = ERROR_READ_DB);
+    	}
     }
     if(row ==0){
     	sqlite3_free_table(result);
@@ -424,11 +437,44 @@ int t_getact_per(const char *sql, char *urlstring)
     }
     //generate string
 	index = col;
+//	GDGL_DEBUG("haha is :%s\n",result[index]);
     strcpy(urlstring, result[index]);
 	//free
 	sqlite3_free_table(result);
 	return 0;
 }
+//int t_getact_per(const char *sql, char *urlstring)
+//{
+//	int res;
+//
+//	sqlite3_stmt *stmt=NULL;
+//
+//	if ((res = sqlite3_prepare_v2(db, sql, strlen(sql), &stmt, NULL)) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
+//		GDGL_DEBUG("sqlite3_prepare_v2 failed:%d\n",res);
+//		if(stmt)
+//			sqlite3_finalize(stmt);
+//		return (res = ERROR_ACCESS_DB);
+//	}
+//
+//	do {
+//		int r = sqlite3_step(stmt);
+//		if(r == SQLITE_ROW) {
+//			const char *v= (const char *)sqlite3_column_text(stmt, 0);
+//			GDGL_DEBUG("the text string is:%s\n",v);
+//		}
+//		else if(r == SQLITE_DONE) {
+//			break;
+//		}
+//		else {
+//			GDGL_DEBUG("read failed:%d\n",r);
+//			break;
+//		}
+//	}while(1);
+//
+//	sqlite3_finalize(stmt);
+//
+//	return 0;
+//}
 /*
  * function: t_timeaction_get_row_by_id()
  * description:
@@ -841,37 +887,37 @@ int get_timeaction_list_db(time_action_base_st **time_act, int *list_total)
 }
 int do_time_action_db(int id, int enable)
 {
-//	time_action_st ta;
-//	time_t calendar=0;
-//	struct tm time_data;
-//	char new_time[OUT_TIME_FORMAT_LEN];
+	time_action_st ta;
+	time_t calendar=0;
+	struct tm time_data;
+	char new_time[OUT_TIME_FORMAT_LEN];
 
 	int res;
-//	int actmode;
+	int actmode;
 	const char* updateSQL = "UPDATE t_time_action SET enable=%d WHERE tid =%d";
-//	const char* update_delay_sql = "UPDATE t_time_action SET para1='%s', enable=%d WHERE tid = %d";
+	const char* update_delay_sql = "UPDATE t_time_action SET para1='%s', enable=%d WHERE tid = %d";
 	char sql[SQL_STRING_MAX_LEN];
 
-//	if(enable == START_TIMEACTION) {
-//		//获取该id的row数据
-//		res = t_timeaction_get_row_by_id(db, &ta, id);
-//		if(res<0){
-////			db_close();
-//			return res;
-//		}
-//		//如果为启用延时, 必须重新登记该动作的时间,并更新数据库
-//		actmode = ta.ta_base.actmode;
-//		if((actmode == TIME_ACTION_DELAY_MODE)) {
-//			//获取系统时间，转换成我们的时间格式
-//			calendar = time(NULL);  //get current calendar time
-//			localtime_r(&calendar, &time_data);
-//			system_tm_convert_to_gl_time_format(&time_data, new_time);
-//			sprintf(sql, update_delay_sql, new_time, enable, id);
-//		}
-//		else
-//			sprintf(sql, updateSQL, enable, id);
-//	}
-//	else
+	if(enable == START_TIMEACTION) {
+		//获取该id的row数据
+		res = t_timeaction_get_row_by_id(db, &ta, id);
+		if(res<0){
+//			db_close();
+			return res;
+		}
+		//如果为启用延时, 必须重新登记该动作的时间,并更新数据库
+		actmode = ta.ta_base.actmode;
+		if((actmode == TIME_ACTION_DELAY_MODE)) {
+			//获取系统时间，转换成我们的时间格式
+			calendar = time(NULL);  //get current calendar time
+			localtime_r(&calendar, &time_data);
+			system_tm_convert_to_gl_time_format(&time_data, new_time);
+			sprintf(sql, update_delay_sql, new_time, enable, id);
+		}
+		else
+			sprintf(sql, updateSQL, enable, id);
+	}
+	else
 		sprintf(sql, updateSQL, enable, id);
 
 //	printf("sql: %s\n",sql);
