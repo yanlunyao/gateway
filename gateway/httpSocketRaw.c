@@ -19,7 +19,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "smartgateway.h"
+
 #include "sqliteOperator.h"
 
 //通过原生socket发送http-get协议
@@ -56,19 +56,19 @@ static int http_get_method_by_socket(const char *urlstring)
 pid_t execute_url_action(int table_flag, int id_value)
 {
 	char sql[SQL_STRING_MAX_LEN];
-	int res;
-	char urlstring[URL_STRING_LEN];
+	int res=0;
+	char urlstring[URL_STRING_LEN+1];
 
 	pid_t	pid;
 	if ((pid = fork()) > 0) {
 		waitpid(-1,NULL,0);
-		return(pid);		//parent process
+		return(pid);				//parent process
 	}
 	if ((pid = fork()) > 0) {
-		exit(0);			//child process
+		exit(0);					//child process
 		return (pid);
 	}
-							//grandson process
+									//grandson process
 	switch (table_flag)
 	{
 		case TIME_ACTION_TABLE_FLAG:
@@ -83,8 +83,15 @@ pid_t execute_url_action(int table_flag, int id_value)
 			exit(1);
 			break;
 	}
+
+//	res = db_init();
+//	if(res <0) {
+//		GDGL_DEBUG("db init failed\n");
+//		exit(0);
+//	}
+
 	res = t_getact_per(sql, urlstring);
-	GDGL_DEBUG("sql: %s, the url string will be execute is: %s\n", sql, urlstring);
+	GDGL_DEBUG("res=%d, sql: %s, the url string will be execute is: %s\n", res, sql, urlstring);
 	if(res ==0) {
 		res = http_get_method_by_socket(urlstring);
 	}
