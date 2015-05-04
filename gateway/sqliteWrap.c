@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "sqliteWrap.h"
 #include "smartgateway.h"
 /*
@@ -23,13 +24,26 @@
 int t_standard_by_stmt(sqlite3 *target_db, const char *sql)
 {
 	int res;
+	int rc;
+	int repeat_cnt=0;
 	sqlite3_stmt* stmt = NULL;
 
-	if (sqlite3_prepare_v2(target_db, sql, strlen(sql), &stmt, NULL) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
-		if(stmt)
-			sqlite3_finalize(stmt);
-		return (res = ERROR_ACCESS_DB);
+	if ((rc = sqlite3_prepare_v2(target_db, sql, strlen(sql), &stmt, NULL)) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
+
+		while(rc == SQLITE_BUSY) {
+			repeat_cnt++;
+			if(repeat_cnt >DB_BUSY_REPEAT_CNT)
+				break;
+			usleep(DB_BUSY_WAIT_TIME*1000);
+			rc = sqlite3_prepare_v2(target_db, sql, strlen(sql), &stmt, NULL);
+		}
+		if(rc != SQLITE_OK) {
+			if(stmt)
+				sqlite3_finalize(stmt);
+			return (res = ERROR_ACCESS_DB);
+		}
 	}
+
 	if (sqlite3_step(stmt) != SQLITE_DONE) {
 		sqlite3_finalize(stmt);
 		return (res = ERROR_WRITE_DB);
