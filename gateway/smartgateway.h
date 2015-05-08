@@ -30,7 +30,7 @@
 #ifdef URL_API_DEBUG
 #define URLAPI_DEBUG(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 #else
-#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/etc/api.log","w"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/etc/database/api.log","w"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 #endif
 
 // UDP PORT

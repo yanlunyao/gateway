@@ -29,85 +29,6 @@
  * return      : success return url size,failed return ERROR FLAG
  * description : 如果解析出来的操作参数不能组成有效的url字符串，则返回错误。
  */
-#if 0
-int gnerate_url_string(int type, const char* para, char para_cnt, char *url, char *actobj)
-{
-	int nwrite;
-	char *p1, *p2, *p3;
-
-	switch(type){
-
-		case URL_TYPE_DEV_BYPASS:													//参数3个
-			if(para_cnt != 3)
-				return URL_PARA_NUM_ERROR;
-			p1 = (char *)para;				//ieee string
-			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
-			p3 = p2+ strlen(p2) +1;	//0-bypass 1-unbypass
-
-			if(atoi(p3)){
-				nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/"
-						"localIASCIEUnByPassZone.cgi?zone_ieee=%s&zone_ep=%s&callback=1234&encodemethod=NONE&sign"
-						"=AAA", p1,p2);
-			}else{
-
-				nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/"
-						"localIASCIEByPassZone.cgi?zone_ieee=%s&zone_ep=%s&callback=1234&encodemethod=NONE&sign"
-						"=AAA", p1,p2);
-			}
-			memcpy(actobj, p1, 16);
-			break;
-
-		case URL_TYPE_ALL_BYPASS:
-
-			if(para_cnt !=1 )
-				return URL_PARA_NUM_ERROR;
-
-			p1 = (char *)para;				//1-allbypass, 0-allunbypass
-			int status = atoi(p1)+6;
-
-			nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/localIASCIEOp"
-					"eration.cgi?operatortype=%d&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", status);//7-allbypass,6-allunbypass
-
-			actobj= NULL;
-			break;
-
-		case URL_TYPE_OUTLET:
-
-			if(para_cnt != 3)
-				return URL_PARA_NUM_ERROR;
-			p1 = (char *)para;				//ieee string
-			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
-			p3 = p2+ strlen(p2) +1;	//0-open, 1-close, 2-invert
-			//remapping operatortype
-			int opt = atoi(p3);
-			if(opt ==0){
-				opt = 1;
-			}
-			else if(opt == 1){
-				opt = 0;
-			}
-			else{
-				opt = 2;
-			}
-
-			nwrite = snprintf(url, URL_STRING_LEN, "http://127.0.0.1/cgi-bin/rest/network/"
-					"mainsOutLetOperation.cgi?ieee=%s&ep=%s&operatortype=%d&"
-					"param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", p1, p2, opt);
-
-			memcpy(actobj, p1, 16);
-			break;
-
-		default:
-			return URL_PARA_TYPE_ERROR;
-			break;
-	}
-    nwrite = nwrite+1; // 加上结束符'\0'
-//   printf("urlstring:%s\n",url);
-    return nwrite;
-}
-#else
-
-
 #define OPT_ENABLE				1
 #define OPT_DISABLE				0
 #define OPT_INVERTSOCKET		2
@@ -117,6 +38,7 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 #define OPT_BYPASS				OPT_DISABLE
 #define OPT_ALLUNBYPASS			OPT_ENABLE
 #define OPT_ALLBYPASS			OPT_DISABLE
+#if 0
 int gnerate_url_string(int type, const char* para, char para_cnt, char *url, char *actobj)
 {
 	int nwrite;
@@ -208,8 +130,97 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 //   printf("urlstring:%s\n",url);
     return nwrite;
 }
-#endif
+#else
+int gnerate_url_string(int type, const char* para, char para_cnt, char *url, char *actobj)
+{
+	int nwrite;
+	char *p1, *p2, *p3;
+	int status;
 
+	switch(type){
+
+		case URL_TYPE_DEV_BYPASS:													//参数3个
+			if(para_cnt != 3)
+				return URL_PARA_NUM_ERROR;
+			p1 = (char *)para;				//ieee string
+			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
+			p3 = p2+ strlen(p2) +1;	//0-bypass 1-unbypass
+
+			if(atoi(p3) == OPT_UNBYPASS){
+				nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/localIASCIEUnByPassZone.cgi?"
+						"zone_ieee=%s&zone_ep=%s&callback=1234&encodemethod=NONE&sign=AAA", p1,p2);
+			}else if(atoi(p3) == OPT_BYPASS){
+
+				nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/localIASCIEByPassZone.cgi?"
+						"zone_ieee=%s&zone_ep=%s&callback=1234&encodemethod=NONE&sign=AAA", p1,p2);
+			}
+			else
+				return URL_PARA_NUM_ERROR;
+//			memcpy(actobj, p1, 16);
+			snprintf(actobj, IEEE_LEN+1, p1);
+			break;
+
+		case URL_TYPE_ALL_BYPASS:
+
+			if(para_cnt !=3 )
+				return URL_PARA_NUM_ERROR;
+
+			p1 = (char *)para;				//ieee string
+			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
+			p3 = p2+ strlen(p2) +1;	//0-allbypass, 1-allunbypass
+
+			if(atoi(p3) == OPT_ALLUNBYPASS)
+				status = 7;
+			else if(atoi(p3) == OPT_ALLBYPASS)
+				status = 6;
+			else
+				return URL_PARA_NUM_ERROR;
+
+			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/localIASCIEOp"
+					"eration.cgi?operatortype=%d&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", status);//7-allbypass,6-allunbypass
+
+			snprintf(actobj, IEEE_LEN+1, p1);
+			break;
+
+		case URL_TYPE_OUTLET:
+
+			if(para_cnt != 3)
+				return URL_PARA_NUM_ERROR;
+			p1 = (char *)para;				//ieee string
+			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
+			p3 = p2+ strlen(p2) +1;
+			//remapping operatortype
+			int opt = atoi(p3);
+
+			if(opt == OPT_OPENSOCKET){
+				opt = 1;
+			}
+			else if(opt == OPT_CLOSESOCKET){
+				opt = 0;
+			}
+			else if(opt == OPT_INVERTSOCKET){
+				opt = 2;
+			}
+			else
+				return URL_PARA_NUM_ERROR;
+
+			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
+					"mainsOutLetOperation.cgi?ieee=%s&ep=%s&operatortype=%d&"
+					"param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", p1, p2, opt);
+
+//			memcpy(actobj, p1, 16);
+			snprintf(actobj, IEEE_LEN+1, p1);
+			break;
+
+		default:
+			return URL_PARA_TYPE_ERROR;
+			break;
+	}
+    nwrite = nwrite+1; // 加上结束符'\0'
+//   printf("urlstring:%s\n",url);
+    return nwrite;
+}
+#endif
 /*
  * fuction     : scnaction_st_gener_malloc
  * input       : text---is scene_base.scnaction

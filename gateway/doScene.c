@@ -64,6 +64,7 @@ int cgiMain()
 	char send_cb_string[GL_CALLBACK_MAX_SIZE];
 	int send_cb_len;
 	int i;
+	char url[URL_STRING_LEN+1];
 
 	url_string_st *acturl=NULL;
 
@@ -94,7 +95,9 @@ int cgiMain()
 		goto all_over;
 	}
 	for (i = 0; i < acturl[0].urltotal; i++){
-		http_do_scene_by_socket(acturl[i].urlstring);
+		snprintf(url, URL_STRING_LEN+1, "GET %s HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", acturl[i].urlstring);
+		http_do_scene_by_socket(url);
+//		http_do_scene_by_socket(acturl[i].urlstring);
 		//http_make(acturl[i].urlstring);
 	}
 //	if((res = http_make_start() ) ==0) {

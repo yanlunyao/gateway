@@ -58,6 +58,7 @@ pid_t execute_url_action(int table_flag, int id_value)
 	char sql[SQL_STRING_MAX_LEN];
 	int res=0;
 	char urlstring[URL_STRING_LEN+1];
+	char url[URL_STRING_LEN+1];
 
 	pid_t	pid;
 	if ((pid = fork()) > 0) {
@@ -91,9 +92,11 @@ pid_t execute_url_action(int table_flag, int id_value)
 //	}
 
 	res = t_getact_per(sql, urlstring);
-	GDGL_DEBUG("res=%d, sql: %s, the url string will be execute is: %s\n", res, sql, urlstring);
+	GDGL_DEBUG("res=%d, sql: %s\n", res, sql);
 	if(res ==0) {
-		res = http_get_method_by_socket(urlstring);
+		snprintf(url, URL_STRING_LEN+1, "GET %s HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", urlstring);
+		GDGL_DEBUG("url is: %s\n", url);
+		res = http_get_method_by_socket(url);
 	}
 	exit(0);
 	return 0;
