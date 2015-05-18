@@ -3,7 +3,8 @@ include ../Make.defines
 PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		clientLogin.cgi modifyPassword.cgi modifyAlias.cgi \
 		cloudProxyHttpModule clientadmin_daemon \
-		timingloop_daemon \
+		SmartControl \
+		BaseDataUpload CallUploadDataProgram.cgi \
 		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi  \
 		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi \
 		AddLinkage.cgi EditLinkage.cgi DelLinkage.cgi GetLinkageList.cgi EnableLinkage.cgi \
@@ -65,7 +66,16 @@ bind_daemon: bind_daemon.o cJSON.o
 #siftCallback_daemon
 siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
-
+		
+#BaseDateUpload
+BaseDataUpload:	baseDataUpload.o cJSON.o httpCurlMethod.o
+		${CC} ${CFLAGS} -o $@ baseDataUpload.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
+		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
+		
+#SmartControl
+SmartControl:	smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o
+		${CC} ${CFLAGS} -o $@ smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o ${LIBS} -lm -lsqlite3
+		cp SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
 #####################################################################################   //scene cgi
 #AddScene
 AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o sqliteWrap.o timingCommon.o
@@ -121,13 +131,14 @@ GetLinkageList.cgi:	getLinkageList.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.
 EnableLinkage.cgi:	enableLinkage.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o
 		${CC} ${CFLAGS} -o $@ enableLinkage.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o ${LIBS} -lm -lsqlite3
 
+##############################################################################################   //invoke api upload daemon cgi
+CallUploadDataProgram.cgi:	callUploadDataProgram.o cgic.o cJSON.o 
+		${CC} ${CFLAGS} -o $@ callUploadDataProgram.o cgic.o cJSON.o ${LIBS} -lm
+		cp CallUploadDataProgram.cgi /home/mac/nfs_share/yanlyFolder/Upload/
 ########################################test################################################
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
 
-#timingloop_daemon
-timingloop_daemon:	timingLoop_daemon.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o
-		${CC} ${CFLAGS} -o $@ timingLoop_daemon.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o ${LIBS} -lm -lsqlite3
 #strsep_test
 strsep_test: strsep_test.o
 		${CC} ${CFLAGS} -o $@ strsep_test.o

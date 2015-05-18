@@ -52,6 +52,8 @@
 #define FEATURE_GDGL_CPROXY_CALLBACK_PORT_STR "5019" //test debug
 #define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT	5018
 #define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT_STR	"5018"
+#define FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT 5019  //test debug
+#define FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT_STR "5019" //test debug
 
 //yan test
 #define LOCALHOST_TEST		"127.0.0.1"//"127.0.0.1"//"192.168.1.196"
@@ -124,7 +126,7 @@ struct client_admin_msgbuf {
 #define ERROR_HTTP_INVOKE				-8	//
 #define ERROR_OTHER						-7  //其它错误，比如分配内存失败的情况
 
-#define NAME_STRING_LEN				30
+#define NAME_STRING_LEN				60
 #define URL_STRING_LEN				200
 #define IEEE_LEN					16
 #define OUT_TIME_FORMAT_LEN			14
@@ -136,6 +138,12 @@ struct client_admin_msgbuf {
 #define TRIGGER_CONDITION_LEN		ATTRIBUTE_LEN+10
 #define DELAY_OR_REPEAT_TIME_FLAG_LEN	PARA3_LEN
 
+//action type
+#define DEV_BYPASS_ACT_TYPE				1
+#define ALL_BYPASS_ACT_TYPE				2
+#define MAIN_OUTLET_ACT_TYPE			3
+#define IPC_CAPTURE_ACT_TYPE			4
+
 //定时规则参数值
 #define TIME_ACTION_DELAY_MODE		2
 #define TIME_ACTION_TIMING_MODE		1
@@ -146,15 +154,18 @@ struct client_admin_msgbuf {
 #define TID_MAX			100
 
 //场景规则参数值
-#define SCENEACTION_MAX_LEN		200
+#define SCENEACTION_MAX_LEN		1000
 
 //联动规则参数值
 //eq-等于；bt-大于；lt-小于；be-大于等于；le-小于等于
+//视频操作标记
+#define LNK_IPC_CAPTURE_RULE_FLAG		3
 
 //COMMON
 typedef struct{
-	char urlstring[URL_STRING_LEN];
-	char actobj[IEEE_LEN];
+	char urlstring[URL_STRING_LEN+1];
+	char actobj[IEEE_LEN+1];
+	char actiontype;
 }url_act_st;
 
 //scene
@@ -202,9 +213,9 @@ typedef struct{
 typedef struct{
 	int tid;	//empty is -1.
 	char mode;	//1~timing, 2~delay
-	char excute_time[OUT_TIME_FORMAT_LEN];
+	char excute_time[OUT_TIME_FORMAT_LEN+1];
 	char repeat;	//1~repeat, 0~not repeat
-	char process_time[DELAY_OR_REPEAT_TIME_FLAG_LEN]; //表示每周重复时间设置或延时时间
+	char process_time[DELAY_OR_REPEAT_TIME_FLAG_LEN+1]; //表示每周重复时间设置或延时时间
 }time_list_st; //定时主循环模块用到的结构体
 typedef struct{
 	int list_total;

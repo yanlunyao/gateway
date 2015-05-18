@@ -50,8 +50,8 @@ int t_time_action_create(sqlite3 *target_db)
     char* errmsg=NULL;
     //actname, actpara, actmode, para1, para2, para3, enable, urlstring, actobj
     const char *sql="create table if not exists t_time_action(tid integer primary key autoincrement, \
-    		actname nvarchar(30),actpara varchar(40),actmode int(1),para1 varchar(14),\
-    		para2 int(1),para3 char(7),enable int(1),urlstring varchar(200),actobj char(16))";
+    		actname nvarchar(60),actpara varchar(40),actmode int(1),para1 varchar(14),\
+    		para2 int(1),para3 char(7),enable int(1),urlstring varchar,actobj char(16), actiontype char(1))";
 
     //表不存在就建表
     result = sqlite3_exec(target_db, sql, NULL, NULL, &errmsg);
@@ -77,8 +77,8 @@ int t_scene_create(sqlite3 *target_db)
     int ret = 0;
     char* errmsg=NULL;
 
-    const char *sql="create table if not exists t_scene(sid integer primary key autoincrement,scnname nvarchar(30),\
-    		scnindex int(1),scnaction varchar(200))";
+    const char *sql="create table if not exists t_scene(sid integer primary key autoincrement,scnname nvarchar(60),\
+    		scnindex int(1),scnaction varchar)";
 
     //表不存在就建表
     result = sqlite3_exec(target_db,sql, NULL, NULL, &errmsg);
@@ -104,7 +104,7 @@ int t_scene_act_create(sqlite3 *target_db)
     int ret = 0;
     char* errmsg=NULL;
 
-    const char *sql="create table if not exists t_scene_act(sid integer(1),urlstring varchar(200),actobj char(16),actpara varchar(40))";
+    const char *sql="create table if not exists t_scene_act(sid integer(1),urlstring varchar,actobj char(16),actpara varchar(40))";
 
     //表不存在就建表
     result = sqlite3_exec(target_db, sql, NULL, NULL, &errmsg);
@@ -131,9 +131,9 @@ int t_linkage_create(sqlite3 *target_db)
     char* errmsg=NULL;
 
     const char *sql="create table if not exists t_linkage(lid integer primary key autoincrement,"
-    		"lnkname nvarchar(30),trgieee char(16),trgep char(2),trgcnd varchar(30),lnkact varchar(40),enable char(1),"
+    		"lnkname nvarchar(60),trgieee char(16),trgep char(2),trgcnd varchar(30),lnkact varchar(40),enable char(1),"
     		"attribute varchar(30),operator char(2),value int(1),"
-    		"actobj char(16),urlstring varchar(200))";
+    		"actobj char(16),urlstring varchar,actiontype varchar(1))";
 
     //表不存在就建表
     result = sqlite3_exec(target_db,sql, NULL, NULL, &errmsg);
@@ -558,8 +558,10 @@ int time_action_get_enable_list(time_list_st *list) //
     	list[j].tid = atoi(result[index]);
     	list[j].mode = (char)atoi(result[index+1]);
     	strcpy(list[j].excute_time, result[index+2]);
+    	(list[j].excute_time)[OUT_TIME_FORMAT_LEN] = '\0';
     	list[j].repeat = (char)atoi(result[index+3]);
     	strcpy(list[j].process_time, result[index+4]);
+    	(list[j].process_time)[DELAY_OR_REPEAT_TIME_FLAG_LEN] = '\0';
         index += col;
     }
 	//free
@@ -594,8 +596,10 @@ int time_action_get_time_list_st_byid(int id, time_list_st *list_member) //
 		list_member->tid = atoi(result[index]);
 		list_member->mode = (char)atoi(result[index+1]);
     	strcpy(list_member->excute_time, result[index+2]);
+    	(list_member->excute_time)[OUT_TIME_FORMAT_LEN] = '\0';
     	list_member->repeat = (char)atoi(result[index+3]);
     	strcpy(list_member->process_time, result[index+4]);
+    	(list_member->process_time)[DELAY_OR_REPEAT_TIME_FLAG_LEN] = '\0';
         index += col;
 //    }
 	//free
@@ -799,10 +803,10 @@ int add_timeaction_db(int *id_value, const time_action_st *time_act)
 	int res;
 	char sql[SQL_STRING_MAX_LEN];
 
-	const char* insertSQL = "INSERT INTO t_time_action VALUES (NULL,'%s', '%s', %d, '%s', %d, '%s', %d, '%s', '%s' )";
+	const char* insertSQL = "INSERT INTO t_time_action VALUES (NULL,'%s', '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d)";
 	sprintf(sql, insertSQL, time_act->ta_base.actname, time_act->ta_base.actpara, time_act->ta_base.actmode,
 			time_act->ta_base.para1, time_act->ta_base.para2, time_act->ta_base.para3, time_act->ta_base.enable,
-			time_act->urlobject.urlstring, time_act->urlobject.actobj);
+			time_act->urlobject.urlstring, time_act->urlobject.actobj, time_act->urlobject.actiontype);
 
 	res = t_time_action_create(db);
 	if(res<0){
@@ -834,7 +838,7 @@ int edit_timeaction_db(const time_action_st *time_act)
 	//update
 	sprintf(sql, updateSQL, time_act->ta_base.actname, time_act->ta_base.actpara, time_act->ta_base.actmode,
 			time_act->ta_base.para1, time_act->ta_base.para2, time_act->ta_base.para3, time_act->ta_base.enable,
-			time_act->urlobject.urlstring, time_act->urlobject.actobj, time_act->ta_base.tid);
+			time_act->urlobject.urlstring, time_act->urlobject.actobj, time_act->urlobject.actiontype, time_act->ta_base.tid);
 
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
@@ -987,12 +991,12 @@ int add_linkage_db(int *id_value, const linkage_st *linkage_act)
 	int res;
 	char sql[SQL_STRING_MAX_LEN];
 
-	const char* insertSQL = "INSERT INTO t_linkage VALUES (NULL,'%s','%s','%s','%s','%s',%d,'%s','%s',%d,'%s','%s')";
+	const char* insertSQL = "INSERT INTO t_linkage VALUES (NULL,'%s','%s','%s','%s','%s',%d,'%s','%s',%d,'%s','%s',%d)";
 
 	sprintf(sql, insertSQL, linkage_act->lnk_base.lnkname, linkage_act->lnk_base.trgieee, linkage_act->lnk_base.trgep,
 			linkage_act->lnk_base.trgcnd, linkage_act->lnk_base.lnkact, linkage_act->lnk_base.enable,
 			linkage_act->lnk_condition.attribute, linkage_act->lnk_condition.operator, linkage_act->lnk_condition.value,
-			linkage_act->urlobject.actobj, linkage_act->urlobject.urlstring);
+			linkage_act->urlobject.actobj, linkage_act->urlobject.urlstring, linkage_act->urlobject.actiontype);
 
 	res = t_linkage_create(db);
 	if(res<0){
@@ -1003,21 +1007,42 @@ int add_linkage_db(int *id_value, const linkage_st *linkage_act)
 		return res;
 	}
 
+	if(linkage_act->urlobject.actiontype == IPC_CAPTURE_ACT_TYPE) {
+		char new_url[URL_STRING_LEN+1]={0};
+		const char* updateSQL = "UPDATE t_linkage SET urlstring='%s' WHERE lid=%d";
+		snprintf(new_url, sizeof(new_url), "%s&flag=%d&ruleid=%d",
+				linkage_act->urlobject.urlstring, LNK_IPC_CAPTURE_RULE_FLAG, *id_value);
+		sprintf(sql, updateSQL, new_url, *id_value);
+
+//		printf("sql:%s\n",sql);
+		res = t_update_delete_and_change_check(db, sql);
+		if(res<0){
+			return res;
+		}
+	}
 	return (res = 0);
 }
 int edit_linkage_db(const linkage_st *linkage_act)
 {
 	int res;
 	char sql[SQL_STRING_MAX_LEN];
+	char new_url[URL_STRING_LEN+1]={0};
 	const char* updateSQL = "UPDATE t_linkage SET lnkname='%s',trgieee='%s',trgep='%s',trgcnd='%s',lnkact='%s',"
-			"enable=%d,attribute='%s',operator='%s',value=%d,actobj='%s',urlstring='%s' WHERE lid=%d";
+			"enable=%d,attribute='%s',operator='%s',value=%d,actobj='%s',urlstring='%s',actiontype=%d WHERE lid=%d";
 
+	if(linkage_act->urlobject.actiontype == IPC_CAPTURE_ACT_TYPE) {
+		snprintf(new_url, sizeof(new_url), "%s&flag=%d&ruleid=%d",
+				linkage_act->urlobject.urlstring, LNK_IPC_CAPTURE_RULE_FLAG, linkage_act->lnk_base.lid);
+	}
+	else {
+		snprintf(new_url, sizeof(new_url), "%s", linkage_act->urlobject.urlstring);
+	}
 	//update
 	sprintf(sql, updateSQL, linkage_act->lnk_base.lnkname, linkage_act->lnk_base.trgieee, linkage_act->lnk_base.trgep,
 			linkage_act->lnk_base.trgcnd, linkage_act->lnk_base.lnkact, linkage_act->lnk_base.enable,
 			linkage_act->lnk_condition.attribute, linkage_act->lnk_condition.operator, linkage_act->lnk_condition.value,
-			linkage_act->urlobject.actobj, linkage_act->urlobject.urlstring, linkage_act->lnk_base.lid);
-
+			linkage_act->urlobject.actobj, new_url, linkage_act->urlobject.actiontype, linkage_act->lnk_base.lid);
+//	printf("sql:%s\n",sql);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
 		return res;

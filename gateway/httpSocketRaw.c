@@ -92,7 +92,7 @@ pid_t execute_url_action(int table_flag, int id_value)
 //	}
 
 	res = t_getact_per(sql, urlstring);
-	GDGL_DEBUG("res=%d, sql: %s\n", res, sql);
+//	GDGL_DEBUG("res=%d, sql: %s\n", res, sql);
 	if(res ==0) {
 		snprintf(url, URL_STRING_LEN+1, "GET %s HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", urlstring);
 		GDGL_DEBUG("url is: %s\n", url);

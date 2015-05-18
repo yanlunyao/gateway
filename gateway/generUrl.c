@@ -17,9 +17,10 @@
 #define URL_PARA_NUM_ERROR	-1
 #define URL_PARA_TYPE_ERROR		-2
 
-#define URL_TYPE_DEV_BYPASS		1
-#define URL_TYPE_ALL_BYPASS		2
-#define	URL_TYPE_OUTLET			3
+//#define URL_TYPE_DEV_BYPASS		1
+//#define URL_TYPE_ALL_BYPASS		2
+//#define	URL_TYPE_OUTLET			3
+//#define URL_TYPE_IPC_CAPTURE	4
 
 /***************************************************************************************/
 /*
@@ -139,7 +140,7 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 
 	switch(type){
 
-		case URL_TYPE_DEV_BYPASS:													//参数3个
+		case DEV_BYPASS_ACT_TYPE:													//参数3个
 			if(para_cnt != 3)
 				return URL_PARA_NUM_ERROR;
 			p1 = (char *)para;				//ieee string
@@ -160,7 +161,7 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			snprintf(actobj, IEEE_LEN+1, p1);
 			break;
 
-		case URL_TYPE_ALL_BYPASS:
+		case ALL_BYPASS_ACT_TYPE:
 
 			if(para_cnt !=3 )
 				return URL_PARA_NUM_ERROR;
@@ -182,7 +183,7 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			snprintf(actobj, IEEE_LEN+1, p1);
 			break;
 
-		case URL_TYPE_OUTLET:
+		case MAIN_OUTLET_ACT_TYPE:
 
 			if(para_cnt != 3)
 				return URL_PARA_NUM_ERROR;
@@ -207,11 +208,18 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
 					"mainsOutLetOperation.cgi?ieee=%s&ep=%s&operatortype=%d&"
 					"param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA", p1, p2, opt);
-
 //			memcpy(actobj, p1, 16);
 			snprintf(actobj, IEEE_LEN+1, p1);
 			break;
 
+		case IPC_CAPTURE_ACT_TYPE:
+			if(para_cnt != 1)
+				return URL_PARA_NUM_ERROR;
+			p1 = (char *)para; //ipc_id
+			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
+					"IPCCapture.cgi?ipc_id=%s", p1);
+			memset(actobj, 0, IEEE_LEN+1);
+			break;
 		default:
 			return URL_PARA_TYPE_ERROR;
 			break;
@@ -337,6 +345,10 @@ int gnerate_per_urlobj(url_act_st *object, const char *text)
 		free(copy);
 		return ERROR_GENERATE_URL_STRING;//根据操作类型和操作参数组串
 	}
+	/*
+	 * add actiontype
+	 * */
+	object->actiontype = atoi(acttype);
 //	printf("%s, %s\n", isinstance.urlstring, isinstance.actobj);
 //	strcpy(object->urlstring, isinstance.urlstring);
 //	strcpy(object->actobj, isinstance.actobj);
