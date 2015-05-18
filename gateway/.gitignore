@@ -31,3 +31,12 @@ clientadmin_daemon
 /listtest
 /list_test
 /list_test.c
+/apiResUpload_daemon
+/test.db
+/posttest
+/siftCallback_daemon
+/libcurl_post_test.c
+/testCommon
+/test_db_sql_script
+/sqlite_multi_test.c
+/sqlite_multi_test

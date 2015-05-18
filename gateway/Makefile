@@ -64,8 +64,8 @@ bind_daemon: bind_daemon.o cJSON.o
 		${CC} ${CFLAGS} -o $@ bind_daemon.o cJSON.o ${LIBS} -lm
 
 #siftCallback_daemon
-siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
-		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
+#siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
+#		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
 		
 #BaseDateUpload
 BaseDataUpload:	baseDataUpload.o cJSON.o httpCurlMethod.o
@@ -140,15 +140,15 @@ CallUploadDataProgram.cgi:	callUploadDataProgram.o cgic.o cJSON.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
 
 #strsep_test
-strsep_test: strsep_test.o
-		${CC} ${CFLAGS} -o $@ strsep_test.o
+#strsep_test: strsep_test.o
+#		${CC} ${CFLAGS} -o $@ strsep_test.o
 		
-clean_strsep: 
-		rm -f strsep_test strsep_test.o
+#clean_strsep: 
+#		rm -f strsep_test strsep_test.o
 
 #libevent_test
-libevent_test: libevent_test.o
-		${CC} ${CFLAGS} -o $@ libevent_test.o -levent
+#libevent_test: libevent_test.o
+#		${CC} ${CFLAGS} -o $@ libevent_test.o -levent
 		
 cp_application_api:
 		cp ${APPLICATION_API} /home/mac/nfs_share/yanlyFolder/application/
