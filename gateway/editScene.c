@@ -66,7 +66,6 @@ int cgiMain()
 	scene_action_stPtr scene_action;
 
 	cgiFormResultType cgi_re;
-	int string_len=100;
 	int res;
 
 	cgiHeaderContentType("application/json"); //MIME
@@ -75,7 +74,7 @@ int cgiMain()
 	cgi_re = cgiFormString("scnname", scene_base.scnname, NAME_STRING_LEN + 1);
 
 	//read action para
-	cgi_re = cgiFormString("scnaction", scene_base.scnaction, string_len+1);
+	cgi_re = cgiFormString("scnaction", scene_base.scnaction, SCENEACTION_MAX_LEN+1);
 
 	//read index
 	cgi_re = cgiFormInteger("scnindex", &scene_base.scnindex, 0);
