@@ -36,6 +36,7 @@ int cgiMain()
 	cgi_re = cgiFormString("para3", time_act.ta_base.para3, PARA3_LEN + 1);
 	cgi_re = cgiFormInteger("enable", &time_act.ta_base.enable, 0);
 	cgi_re = cgiFormInteger("tid", &time_act.ta_base.tid, 0);
+//	printf("tid=%d\n", time_act.ta_base.tid);
 
 	res = db_init();
 	if(res<0){

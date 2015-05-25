@@ -833,13 +833,14 @@ int edit_timeaction_db(const time_action_st *time_act)
 	int res;
 	char sql[SQL_STRING_MAX_LEN];
 	const char* updateSQL = "UPDATE t_time_action SET actname='%s', actpara='%s', actmode=%d, para1='%s', para2=%d, para3='%s', enable=%d, "
-			"urlstring='%s', actobj='%s' WHERE tid =%d";
+			"urlstring='%s', actobj='%s', actiontype=%d WHERE tid =%d";
 
 	//update
 	sprintf(sql, updateSQL, time_act->ta_base.actname, time_act->ta_base.actpara, time_act->ta_base.actmode,
 			time_act->ta_base.para1, time_act->ta_base.para2, time_act->ta_base.para3, time_act->ta_base.enable,
 			time_act->urlobject.urlstring, time_act->urlobject.actobj, time_act->urlobject.actiontype, time_act->ta_base.tid);
 
+//	printf("sql=%s\n",sql);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
 		return res;
