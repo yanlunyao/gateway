@@ -3,7 +3,7 @@
  *  Created on  : Apr 20, 2015
  *  Author      : yanly
  *  Description : 定时，联动功能主循环
- *  Version     :
+ *  Version     : V01-00
  *  History     : <author>		<time>		<version>		<desc>
  */
 
@@ -18,6 +18,8 @@
 #include "timedaction.h"
 #include "linkageLoop.h"
 #include "invokeBaseDataUpldPrm.h"
+
+#define  PROJECT_VERSION			"SmartControl-V01-00"
 
 #define  CB_HEART_BEAT_TIME			30   //30s
 #define  TIMEOUT_UNIT				5	 //(5s/unit)
@@ -63,7 +65,9 @@ int main()
 	pthread_t timeloop_thread_id;
 	timed_action_t *time_action_cb;
 	timed_action_t *time_action_1s;
-
+	printf("---------%s---------\n", PROJECT_VERSION);
+	printf("------------------------------------------------\n");
+	printf("------------------------------------------------\n");
 	time_loop_init();
 	linkage_head_init();
 	time_action_1s = timed_action_schedule_periodic(notifier, TIMEOUT_UNIT, 0, &app5s_task, NULL); //1s task

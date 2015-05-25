@@ -1146,6 +1146,7 @@ int linkage_get_enable_list_db(list_linkage_st *head)
     		GDGL_DEBUG("malloc failed\n");
     		exit(1);
     	}
+    	pos->linkage_member.effect_status =0;  //add yanly150525
     	pos->linkage_member.lid = atoi(result[index]);
     	snprintf(pos->linkage_member.trgieee, IEEE_LEN+1, result[index+1]);
     	snprintf(pos->linkage_member.trgep, 2+1, result[index+2]);
@@ -1183,6 +1184,7 @@ int get_linkage_list_member_byid(int id, linkage_loop_st *member) //
     }
 	index = col;
 //    for(j=0; j<row; j++){
+		member->effect_status =0;  //add yanly150525
 		member->lid = atoi(result[index]);
 		snprintf(member->trgieee, IEEE_LEN+1, result[index+1]);
 		snprintf(member->trgep, 2+1, result[index+2]);

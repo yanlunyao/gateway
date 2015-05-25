@@ -249,6 +249,7 @@ typedef struct
 	char attribute[ATTRIBUTE_LEN+1]; //属性
 	char operator[REL_OPERATOR_LEN+1];		//运算符
 	int value;			//值
+	char effect_status;  //该条规则当前生效的状态。生效时置1，1s后状态恢复置0；
 }linkage_loop_st;
 typedef struct
 {

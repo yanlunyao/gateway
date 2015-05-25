@@ -14,14 +14,18 @@
 #include "linkageLoop.h"
 #include "sqliteOperator.h"
 #include "httpSocketRaw.h"
+#include "timedaction.h"
 
+#define LINK_EFFECT_TIME		1	//1s
 
 list_linkage_st linkage_loop_head;
 //list_linkage_st *linkage_loop;
 //struct list_head *pos, *next;
 
+extern timed_action_notifier* notifier;
 
 
+void link_effect_status_check(void *arg);
 //初始化链表头
 void linkage_head_init()
 {
@@ -42,6 +46,7 @@ void linkage_traverse_printf()
 		printf("attribute:%s\n", linkage_pos->linkage_member.attribute);
 		printf("operator:%s\n", linkage_pos->linkage_member.operator);
 		printf("value:%d\n", linkage_pos->linkage_member.value);
+		printf("effect status:%d\n", linkage_pos->linkage_member.effect_status);
 		printf("~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	}
 }
@@ -55,6 +60,7 @@ void list_linkage_add_member(linkage_loop_st member)
 		GDGL_DEBUG("malloc failed\n");
 		exit(1);
 	}
+
 	pos->linkage_member = member;
 	//将节点链接到链表的末尾
 	list_add_tail(&(pos->list), &(linkage_loop_head.list));
@@ -133,16 +139,19 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 {
 	struct list_head *pos, *next;
 	list_linkage_st *member;
+	timed_action_t *ta_link_status_1s;
+	char trg_enable =0;
 
 	list_for_each_safe(pos, next, &(linkage_loop_head.list)) {
 		member = list_entry(pos, list_linkage_st, list);
-
+		if(member->linkage_member.effect_status ==1) {
+			continue;
+		}
 		if(		(memcmp(ieee, member->linkage_member.trgieee, IEEE_LEN)==0)&&
 				(memcmp(ep, member->linkage_member.trgep, 2)==0)&&
 				(memcmp(attr, member->linkage_member.attribute, strlen(attr))==0)
 		)
 		{
-			char trg_enable =0;
 			switch(flag_of_operator(member->linkage_member.operator)) {
 				case 0:
 					if(value == member->linkage_member.value)
@@ -167,11 +176,27 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 				default:break;
 			}
 			if(trg_enable) {
-				GDGL_DEBUG("linkage trigger, ieee=%s, attribute=%s, opt=%s, value=%d\n",ieee,attr,member->linkage_member.operator,value);
+
+				trg_enable =0;
+				member->linkage_member.effect_status =1;
+				ta_link_status_1s = timed_action_schedule(notifier, LINK_EFFECT_TIME, 0, &link_effect_status_check, &(member->linkage_member));
+			    if(ta_link_status_1s ==NULL){
+			    	GDGL_DEBUG("time task init error\n");
+			    	exit(1);
+			    }
+				GDGL_DEBUG("linkage trigger, lid=%d, ieee=%s, attribute=%s, opt=%s, value=%d\n",member->linkage_member.lid,ieee,attr,member->linkage_member.operator,value);
 				execute_url_action(LINkAGE_TABLE_FLAG, member->linkage_member.lid);
 			}
 		}
 	}
 }
 
+void link_effect_status_check(void *arg)
+{
+	linkage_loop_st *pos = (linkage_loop_st *)arg;
+	if(pos->effect_status ==1) {
+		pos->effect_status =0;
+		GDGL_DEBUG("lid[%d] effect status expired\n", pos->lid);
+	}
+}
 
