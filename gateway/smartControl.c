@@ -64,13 +64,13 @@ int main()
 {
 	pthread_t timeloop_thread_id;
 	timed_action_t *time_action_cb;
-	timed_action_t *time_action_1s;
+	timed_action_t *ta_enroll_check;
 	printf("---------%s---------\n", PROJECT_VERSION);
 	printf("------------------------------------------------\n");
 	printf("------------------------------------------------\n");
 	time_loop_init();
 	linkage_head_init();
-	time_action_1s = timed_action_schedule_periodic(notifier, TIMEOUT_UNIT, 0, &app5s_task, NULL); //1s task
+	ta_enroll_check = timed_action_schedule_periodic(notifier, TIMEOUT_UNIT, 0, &app5s_task, NULL); //5s task
 
 	//读数据库启用的定时规则信息，保存到列表
 	if(time_action_get_enable_list(list_time) <0) {

@@ -76,9 +76,10 @@ pid_t invoke_by_datatype_fork(int datatype, const char *para)
 
 	GDGL_DEBUG("systerm cmd:%s\n", cmd);
 
+	sleep(3); //add by yanly150528
 	res = system(cmd);
 	if(res <0) {
-		GDGL_DEBUG("system call failed,res is: %d", res);
+		GDGL_DEBUG("system call failed,res is: %d\n", res);
 	}
 	exit(0);
 	return 0;
