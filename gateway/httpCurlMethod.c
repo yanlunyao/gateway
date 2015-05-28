@@ -179,11 +179,13 @@ int http_curl_get(const char *url, char *result)
 		rc = curl_easy_perform(curl);
 		if (CURLE_OK != rc) {
 			GDGL_DEBUG("curl_easy_perform Error: %s\n", curl_easy_strerror( rc ));
+			exit(1);
 			res = CURL_PERFORM_ERR;
 		}
 	}
 	else {
 		GDGL_DEBUG("curl_easy_init Error\n");
+		exit(1);
 		res = CURL_INIT_ERR;
 	}
 	curl_easy_cleanup(curl);

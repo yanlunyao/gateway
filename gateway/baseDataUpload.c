@@ -23,10 +23,11 @@
 
 
 #define USE_LIBCURL
+#define APP_VERSION			"V01-00"
 
-#define DEBUG_SOCKET_TCP_TESTER
+//#define DEBUG_SOCKET_TCP_TESTER
 #ifdef	DEBUG_SOCKET_TCP_TESTER
-#define PUSH_SERVER_IP		"192.168.1.149"
+#define PUSH_SERVER_IP		"192.168.1.238"
 #else
 #define PUSH_SERVER_IP		"127.0.0.1"
 #endif
@@ -78,8 +79,9 @@ const char sift_api[API_AMOUNT][] = {
 
 int upload_2_server(const char *send_text, int send_size);
 int invoke_api_and_upload(const char *url_str, int api_num);
+void wati_server_init_ok();
 /*
- * 入口参数： 0表示所有api全部上传；其他表示对应的api上传
+ * 入口参数： 0表示所有ape全部上传；其他表示对应的api上传
  * */
 int main(int argc, char* argv[])
 {
@@ -87,7 +89,7 @@ int main(int argc, char* argv[])
 	int res;
 	int i;
 
-	sleep(1);
+	printf("===============BaseDataUpload version:%s\n", APP_VERSION);
 	printf("=========================================upload api msg start=================================================\n");
 	rc = curl_global_init(CURL_GLOBAL_ALL);
 	if (rc != CURLE_OK) {
@@ -98,6 +100,8 @@ int main(int argc, char* argv[])
 	printf("entry parameter:%s\n",argv[1]);
 
 	if(argv[1] ==NULL) {
+		sleep(5); //add yanly150528  开机时启动此程序，需要延时，等待网络环境稳定
+		wati_server_init_ok();
 		for(i=0; i<API_AMOUNT; i++) {
 			if(api_all_upload_enable[i] == 0x01) {
 				GDGL_DEBUG("url_str: %s\n", sift_api[i]);
@@ -106,7 +110,6 @@ int main(int argc, char* argv[])
 		}
 	}
 	else {
-
 		int entry_para = atoi(argv[1]);
 		if(entry_para > API_AMOUNT) {
 			GDGL_DEBUG("entry parameter invalid\n");
@@ -165,10 +168,17 @@ int upload_2_server(const char *send_text, int send_size)
 		return -2;
 	}
 
-	if ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
-		GDGL_DEBUG("connect error\n");
-		close(fd);
-		return -1;
+//	if ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
+//		GDGL_DEBUG("connect error, push addr:%s,port:%d\n",PUSH_SERVER_IP,FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
+//		close(fd);
+//		return -1;
+//	}
+	//modify by yanly150528
+	while ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
+		GDGL_DEBUG("connect error, push addr:%s,port:%d\n",PUSH_SERVER_IP,FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
+		sleep(1);
+//		close(fd);
+//		return -1;
 	}
 	#ifdef DEBUG_SOCKET_TCP_TESTER
 //	sleep(1); //debug yan
@@ -184,6 +194,30 @@ int upload_2_server(const char *send_text, int send_size)
 	close(fd);
 
 	return 0;
+}
+void wati_server_init_ok()
+{
+	int fd;
+	struct sockaddr_in	servaddr;
+
+	while ( (fd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
+        GDGL_DEBUG("socket error\n");
+		sleep(1);
+	}
+	bzero(&servaddr, sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_port = htons(FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
+
+	while ( (inet_pton(AF_INET, PUSH_SERVER_IP, &servaddr.sin_addr)) <= 0) {
+		GDGL_DEBUG("inet_pton error\n");
+		sleep(1);
+	}
+	while ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
+		GDGL_DEBUG("connect error, push addr:%s,port:%d\n",PUSH_SERVER_IP,FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
+		sleep(1);
+	}
+	close(fd);
+	GDGL_DEBUG("sever wait init ok\n");
 }
 /*
  * 调api后将数据上传至云代理
@@ -204,6 +238,7 @@ int invoke_api_and_upload(const char *url_str, int api_num)
 	timestamp = time(NULL);
 //	snprintf(timestamp_str, sizeof(timestamp_str), "%ld", timestamp);
 
+	wati_server_init_ok();
 	rt = http_curl_get(url_str, result_str);
 	if(rt <0) {
 		GDGL_DEBUG("invoke api failed\n");
@@ -224,7 +259,7 @@ int invoke_api_and_upload(const char *url_str, int api_num)
 		cJSON_AddNumberToObject(new_json, "uploadtime", timestamp);
 		new_json_str = cJSON_PrintUnformatted(new_json);
 //		printf("new_json_str:%s, strlen:%d\n", new_json_str, strlen(new_json_str));
-		GDGL_DEBUG("new_json_str strlen:%d\n", strlen(new_json_str));
+		GDGL_DEBUG("new_json_str strlen:%d, string:%s\n", strlen(new_json_str), new_json_str);
 		rt = upload_2_server(new_json_str, strlen(new_json_str));
 		free(new_json_str);
 		cJSON_Delete(new_json);
