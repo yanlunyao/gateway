@@ -17,6 +17,10 @@
 
 sqlite3 * db=NULL;
 
+int t_time_action_create(sqlite3 *target_db);
+int t_scene_create(sqlite3 *target_db);
+int t_scene_act_create(sqlite3 *target_db);
+int t_linkage_create(sqlite3 *target_db);
 //////////////////////////////////////////////////////////////////////////////////////////
 int db_init()
 {
@@ -41,6 +45,27 @@ void db_close()
 sqlite3* get_application_db(void)
 {
 	return db;
+}
+int smartcontrol_table_init()
+{
+	int res=0;
+	res = t_scene_create(db);
+	if(res<0){
+		return res;
+	}
+	res = t_scene_act_create(db);
+	if(res<0){;
+		return res;
+	}
+	res = t_time_action_create(db);
+	if(res<0){;
+		return res;
+	}
+	res = t_linkage_create(db);
+	if(res<0){;
+		return res;
+	}
+	return res;
 }
 /////////////////////////////////////////////////////////////////////////////////////creat table
 int t_time_action_create(sqlite3 *target_db)
@@ -757,6 +782,14 @@ int del_scene_db(int sid)
 int get_scene_db(scene_base_list_st *scene_base_list)
 {
 	int res;
+	res = t_scene_create(db);
+	if(res<0){
+		return res;
+	}
+	res = t_scene_act_create(db);
+	if(res<0){;
+		return res;
+	}
 	res = t_scene_getlist(scene_base_list, db);
 	if(res<0){
 		return res;
@@ -883,6 +916,10 @@ int get_timeaction_list_db(time_action_base_st **time_act, int *list_total)
 {
 	int res;
 
+	res = t_time_action_create(db);
+	if(res<0){
+		return res;
+	}
 	res = t_timeaction_get_alllist(db, &time_act, list_total);
 	if(res<0){
 		return res;
@@ -1075,6 +1112,10 @@ int get_linkage_base_all_list_db(linkage_base_st **linkage_act, int *total_num)
 	int j;
 	int row, col, index;
 
+	res = t_linkage_create(db);
+	if(res<0){
+		return res;
+	}
 
     if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){
 		URLAPI_DEBUG("read db failed:%s\n",errmsg);

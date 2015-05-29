@@ -111,6 +111,11 @@ static void time_loop_init()
 		db_close();
 		exit(1);
 	}
+	res = smartcontrol_table_init();
+	if(res<0){
+		db_close();
+		exit(1);
+	}
 	list_time_reset_all_member();//初始化列表
 
 	notifier = timed_action_mainloop_threaded(); //初始化多定时任务

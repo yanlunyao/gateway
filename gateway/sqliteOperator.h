@@ -15,6 +15,7 @@
 
 int db_init();
 void db_close();
+int smartcontrol_table_init();
 
 //extern function
 sqlite3* get_application_db(void);
