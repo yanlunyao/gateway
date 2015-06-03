@@ -41,6 +41,11 @@
 #define GET_IEEEENDPOINT_NUM				7
 #define API_AMOUNT							GET_IEEEENDPOINT_NUM
 
+#define RECONNECT_MAX_CNT					20
+
+//////////////////
+int reconnect_cnt =0;  //重连云代理次数，重连超过20次后，延时1小时候再重连。
+
 char api_all_upload_enable[API_AMOUNT] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00}; //上传所有api返回结果集，1表示需要，0表示不需要
 
 #ifdef USE_LIBCURL
@@ -76,7 +81,7 @@ const char sift_api[API_AMOUNT][] = {
 	"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n"
 };
 #endif
-
+////////////////////////////////
 int upload_2_server(const char *send_text, int send_size);
 int invoke_api_and_upload(const char *url_str, int api_num);
 void wati_server_init_ok();
@@ -89,7 +94,7 @@ int main(int argc, char* argv[])
 	int res;
 	int i;
 
-	printf("===============BaseDataUpload version:%s\n", APP_VERSION);
+	printf("===============BaseDataUpload version:%s, COMPILE_TIME[%s: %s]\n", APP_VERSION, __DATE__, __TIME__);
 	printf("=========================================upload api msg start=================================================\n");
 	rc = curl_global_init(CURL_GLOBAL_ALL);
 	if (rc != CURLE_OK) {
@@ -100,7 +105,7 @@ int main(int argc, char* argv[])
 	printf("entry parameter:%s\n",argv[1]);
 
 	if(argv[1] ==NULL) {
-		sleep(5); //add yanly150528  开机时启动此程序，需要延时，等待网络环境稳定
+		sleep(8); //add yanly150528  开机时启动此程序，需要延时，等待网络环境稳定
 		wati_server_init_ok();
 		for(i=0; i<API_AMOUNT; i++) {
 			if(api_all_upload_enable[i] == 0x01) {
@@ -176,10 +181,15 @@ int upload_2_server(const char *send_text, int send_size)
 	//modify by yanly150528
 	while ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
 		GDGL_DEBUG("connect error, push addr:%s,port:%d\n",PUSH_SERVER_IP,FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
-		sleep(1);
-//		close(fd);
-//		return -1;
+		reconnect_cnt++;
+		if(reconnect_cnt > RECONNECT_MAX_CNT) {
+			sleep(3600);
+			reconnect_cnt = 0;
+		}
+		else
+			sleep(1);
 	}
+	reconnect_cnt = 0;
 	#ifdef DEBUG_SOCKET_TCP_TESTER
 //	sleep(1); //debug yan
 	#endif
@@ -214,8 +224,15 @@ void wati_server_init_ok()
 	}
 	while ( connect(fd, (SA *) &servaddr, sizeof(servaddr)) < 0 ) {
 		GDGL_DEBUG("connect error, push addr:%s,port:%d\n",PUSH_SERVER_IP,FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
-		sleep(1);
+		reconnect_cnt++;
+		if(reconnect_cnt > RECONNECT_MAX_CNT) {
+			sleep(3600);
+			reconnect_cnt = 0;
+		}
+		else
+			sleep(1);
 	}
+	reconnect_cnt = 0;
 	close(fd);
 	GDGL_DEBUG("sever wait init ok\n");
 }
