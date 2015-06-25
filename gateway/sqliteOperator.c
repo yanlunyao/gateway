@@ -189,16 +189,57 @@ int t_linkage_create(sqlite3 *target_db)
  * return:	0-ok, <0-failed
  * others:
  * */
+//int t_scene_action_insert(const scene_action_stPtr action, int sid, sqlite3 *db_target)		//tabel: t_scene_act
+//{
+//	int res;
+//
+//	//1). 通过执行BEGIN TRANSACTION语句手工开启一个事物
+//	const char* beginSQL = "BEGIN TRANSACTION";
+//
+//	res = t_standard_by_stmt(db_target, beginSQL);
+//	if(res <0)
+//		return res;
+//
+//	//2). 准备插入语句及相关的绑定变量。
+//	sqlite3_stmt* stmt = NULL;
+//	const char* insertSQL = "INSERT INTO t_scene_act VALUES (?, ?, ?, ?)"; //sid integer(1),urlstring varchar(200),actobj char(16),actpara varchar(40)
+//	if (sqlite3_prepare_v2(db_target, insertSQL, strlen(insertSQL), &stmt, NULL) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
+//		if(stmt)
+//			sqlite3_finalize(stmt);
+//		return (res = ERROR_WRITE_DB);
+//	}
+//
+//	//3). 基于已有的SQL语句，迭代的绑定不同的变量数据
+//	int insertCount = action[0].acttotal;		//插入多少条记录
+//	int i;
+//	for(i=0; i < insertCount; i++) {
+//		//在绑定时，最左面的变量索引值是1。
+//		sqlite3_bind_int(stmt, 1, sid);
+//		sqlite3_bind_text(stmt, 2, action[i].urlstring, strlen(action[i].urlstring), SQLITE_TRANSIENT);
+//		sqlite3_bind_text(stmt, 3, action[i].actobj, strlen(action[i].actobj), SQLITE_TRANSIENT);
+//		sqlite3_bind_text(stmt, 4, action[i].actpara, strlen(action[i].actpara), SQLITE_TRANSIENT);
+//		if (sqlite3_step(stmt) != SQLITE_DONE) {
+//			sqlite3_finalize(stmt);
+//			return (res = ERROR_WRITE_DB);
+//		}
+//		//重新初始化该sqlite3_stmt对象绑定的变量。
+//		 sqlite3_reset(stmt);
+//	}
+//	sqlite3_finalize(stmt);
+//
+//	//4). 完成后通过执行COMMIT语句提交事物。
+//	const char* commitSQL = "COMMIT";
+//
+//	res = t_standard_by_stmt(db_target, commitSQL);
+//	if(res <0)
+//		return res;
+//
+//      //over
+//      return (res = 0);
+//}
 int t_scene_action_insert(const scene_action_stPtr action, int sid, sqlite3 *db_target)		//tabel: t_scene_act
 {
 	int res;
-
-	//1). 通过执行BEGIN TRANSACTION语句手工开启一个事物
-	const char* beginSQL = "BEGIN TRANSACTION";
-
-	res = t_standard_by_stmt(db_target, beginSQL);
-	if(res <0)
-		return res;
 
 	//2). 准备插入语句及相关的绑定变量。
 	sqlite3_stmt* stmt = NULL;
@@ -227,16 +268,66 @@ int t_scene_action_insert(const scene_action_stPtr action, int sid, sqlite3 *db_
 	}
 	sqlite3_finalize(stmt);
 
-	//4). 完成后通过执行COMMIT语句提交事物。
-	const char* commitSQL = "COMMIT";
-
-	res = t_standard_by_stmt(db_target, commitSQL);
-	if(res <0)
-		return res;
-
-      //over
-      return (res = 0);
+    //over
+    return (res = 0);
 }
+//int t_scene_and_action_insert(const scene_action_stPtr action, int* sid_value, sqlite3 *db_target, char *t_scene_sql)
+//{
+//	int res;
+//	int sid;
+//
+//	//1). 通过执行BEGIN TRANSACTION语句手工开启一个事物
+//	const char* beginSQL = "BEGIN TRANSACTION";
+//
+//	res = t_standard_by_stmt(db_target, beginSQL);
+//	if(res <0)
+//		return res;
+//
+//	//写
+//	res = t_insert_retid(db_target, t_scene_sql, sid_value);
+//	if(res<0){
+//		return res;
+//	}
+//	sid = *sid_value;
+////	printf("---------------sid=%d\n",sid);
+//
+//	//2). 准备插入语句及相关的绑定变量。
+//	sqlite3_stmt* stmt = NULL;
+//	const char* insertSQL = "INSERT INTO t_scene_act VALUES (?, ?, ?, ?)"; //sid integer(1),urlstring varchar(200),actobj char(16),actpara varchar(40)
+//	if (sqlite3_prepare_v2(db_target, insertSQL, strlen(insertSQL), &stmt, NULL) != SQLITE_OK) {	//构建插入数据的sqlite3_stmt对象
+//		if(stmt)
+//			sqlite3_finalize(stmt);
+//		return (res = ERROR_WRITE_DB);
+//	}
+//
+//	//3). 基于已有的SQL语句，迭代的绑定不同的变量数据
+//	int insertCount = action[0].acttotal;		//插入多少条记录
+//	int i;
+//	for(i=0; i < insertCount; i++) {
+//		//在绑定时，最左面的变量索引值是1。
+//		sqlite3_bind_int(stmt, 1, sid);
+//		sqlite3_bind_text(stmt, 2, action[i].urlstring, strlen(action[i].urlstring), SQLITE_TRANSIENT);
+//		sqlite3_bind_text(stmt, 3, action[i].actobj, strlen(action[i].actobj), SQLITE_TRANSIENT);
+//		sqlite3_bind_text(stmt, 4, action[i].actpara, strlen(action[i].actpara), SQLITE_TRANSIENT);
+//		if (sqlite3_step(stmt) != SQLITE_DONE) {
+//			sqlite3_finalize(stmt);
+//			return (res = ERROR_WRITE_DB);
+//		}
+//		//重新初始化该sqlite3_stmt对象绑定的变量。
+//		 sqlite3_reset(stmt);
+//	}
+//	sqlite3_finalize(stmt);
+//
+//	//4). 完成后通过执行COMMIT语句提交事物。
+//	const char* commitSQL = "COMMIT";
+//
+//	res = t_standard_by_stmt(db_target, commitSQL);
+//	if(res <0)
+//		return res;
+//
+//      //over
+//      return (res = 0);
+//}
 /*
  * function: t_scene_index_modify()
  * description: 不检查表里id是否存在，不存在则插入自动不成功，检查过多效率会变慢, 但是没有返回错误。
@@ -679,6 +770,32 @@ int t_timeaction_get_alllist(sqlite3 *db, time_action_base_st ***time_act, int *
  * return: 0-ok, <0-failed
  * others:
  * */
+//int add_scene_db(scene_base_st* base, const scene_action_stPtr action)
+//{
+//	int res;
+//	char sql[SQL_STRING_MAX_LEN];
+//	const char* insertSQL = "INSERT INTO t_scene VALUES (null,'%s', %d, '%s')";
+//	sprintf(sql, insertSQL, base->scnname, base->scnindex, base->scnaction);
+//
+//	res = t_scene_create(db);
+//	if(res<0){
+//		return res;
+//	}
+//	res = t_scene_act_create(db);
+//	if(res<0){;
+//		return res;
+//	}
+//	//写
+//	res = t_insert_retid(db, sql, &base->sid);
+//	if(res<0){
+//		return res;
+//	}
+//	res = t_scene_action_insert(action, base->sid, db);
+//	if(res<0){
+//		return res;
+//	}
+//	return (res = 0);
+//}
 int add_scene_db(scene_base_st* base, const scene_action_stPtr action)
 {
 	int res;
@@ -694,12 +811,22 @@ int add_scene_db(scene_base_st* base, const scene_action_stPtr action)
 	if(res<0){;
 		return res;
 	}
-	//写
-	res = t_insert_retid(db, sql, &base->sid);
+	res = t_standard_by_stmt(db, BEAGIN_TRANSCATION); //开启事务
 	if(res<0){
 		return res;
 	}
+	//写
+	res = t_insert_retid(db, sql, &base->sid);
+	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
+		return res;
+	}
 	res = t_scene_action_insert(action, base->sid, db);
+	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
+		return res;
+	}
+	res = t_standard_by_stmt(db, COMMIT_TRANSCATION);
 	if(res<0){
 		return res;
 	}
@@ -713,6 +840,35 @@ int add_scene_db(scene_base_st* base, const scene_action_stPtr action)
  * return: 0-ok, <0-failed
  * others:
  * */
+//int modify_scene_db(const scene_base_st* base, const scene_action_stPtr action)
+//{
+//	int res;
+//
+//	const char* updateSQL = "UPDATE t_scene SET scnname= '%s', scnindex = %d, "
+//			"scnaction = '%s' WHERE sid = %d";
+//	const char* deleteSQL = "DELETE FROM t_scene_act WHERE sid = %d";
+//
+//	char sql[SQL_STRING_MAX_LEN];
+//
+//	//update
+//	sprintf(sql, updateSQL, base->scnname, base->scnindex, base->scnaction, base->sid);
+//	res = t_update_delete_and_change_check(db, sql);
+//	if(res<0){
+//		return res;
+//	}
+//	//delete t_scene_act according sid
+//	sprintf(sql, deleteSQL, base->sid);
+//	res = t_update_delete_and_change_check(db, sql);
+//	if(res<0){
+//		return res;
+//	}
+//	//insert new
+//	res = t_scene_action_insert(action, base->sid, db);
+//	if(res<0){
+//		return res;
+//	}
+//	return (res = 0);
+//}
 int modify_scene_db(const scene_base_st* base, const scene_action_stPtr action)
 {
 	int res;
@@ -723,20 +879,31 @@ int modify_scene_db(const scene_base_st* base, const scene_action_stPtr action)
 
 	char sql[SQL_STRING_MAX_LEN];
 
+	res = t_standard_by_stmt(db, BEAGIN_TRANSCATION); //开启事务
+	if(res<0){
+		return res;
+	}
 	//update
 	sprintf(sql, updateSQL, base->scnname, base->scnindex, base->scnaction, base->sid);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
 		return res;
 	}
 	//delete t_scene_act according sid
 	sprintf(sql, deleteSQL, base->sid);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
 		return res;
 	}
 	//insert new
 	res = t_scene_action_insert(action, base->sid, db);
+	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
+		return res;
+	}
+	res = t_standard_by_stmt(db, COMMIT_TRANSCATION);
 	if(res<0){
 		return res;
 	}
@@ -757,15 +924,25 @@ int del_scene_db(int sid)
 	const char* deleteSQL2 = "DELETE FROM t_scene_act WHERE sid = %d";
 	char sql[256];
 
+	res = t_standard_by_stmt(db, BEAGIN_TRANSCATION); //开启事务
+	if(res<0){
+		return res;
+	}
 	//delete t_scene by sid
 	sprintf(sql, deleteSQL, sid);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
 		return res;
 	}
 	//delete t_scene_act according sid
 	sprintf(sql, deleteSQL2, sid);
 	res = t_update_delete_and_change_check(db,sql);
+	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
+		return res;
+	}
+	res = t_standard_by_stmt(db, COMMIT_TRANSCATION);
 	if(res<0){
 		return res;
 	}

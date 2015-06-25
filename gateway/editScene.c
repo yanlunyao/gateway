@@ -82,6 +82,8 @@ int cgiMain()
 	//read sid
 	cgi_re = cgiFormInteger("sid", &scene_base.sid, 0);
 
+//	printf("sid=%d\n",scene_base.sid);
+
 	res = db_init();
 	if(res<0){
 		goto all_over;
