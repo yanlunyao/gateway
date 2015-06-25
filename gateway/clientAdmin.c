@@ -147,7 +147,6 @@ int read_id(char * id_str)
 	}
 	close(fd_id); //also unlock
 	id_str[FEATURE_GDGL_ID_LEN] = '\0';
-
 	return 0;
 }
 
@@ -180,7 +179,10 @@ int read_alias(char * alias_str)
 	}
 	close(fd_alias); //also unlock
 	alias_str[res] = '\0';
-
+	//add by yanly150625
+	if((alias_str[res-1] == 0x0a)||(alias_str[res-1] == 0x0d)) {  //如果最后一个字符等于换行符号或者回车键
+		alias_str[res-1] = '\0';
+	}
 	return 0;
 }
 
@@ -213,7 +215,10 @@ int read_password(char * passwd_str)
 	}
 	close(fd_passwd); //also unlock
 	passwd_str[res] = '\0';
-
+	//add by yanly150625
+	if((passwd_str[res-1] == 0x0a)||(passwd_str[res-1] == 0x0d)) {  //如果最后一个字符等于换行符号或者回车键
+		passwd_str[res-1] = '\0';
+	}
 	return 0;
 }
 
@@ -283,6 +288,7 @@ int check_account(cgiFormResultType cgi_result, const char * account_str, const 
 			    ret = clientAdminAccountTooShortErr;
 				break;
 			}
+//			printf("%s,%s,\n",account_str, alias_str);
 			if ( (strcmp(account_str, id_str) != 0) && (strcmp(account_str, alias_str) != 0) ) {
 				ret = clientAdminAccountCheckErr;
 			}
@@ -328,6 +334,8 @@ int check_password(cgiFormResultType cgi_result, const char * received_passwd_st
 			    ret = clientAdminPasswdTooShortErr;
 				break;
 			}
+//			printf("%s,%s,\n",received_passwd_str, gateway_passwd_str);
+//			printf("size=%d,last string=%d\n",strlen(gateway_passwd_str),gateway_passwd_str[strlen(gateway_passwd_str)-1]);
 			if (strcmp(received_passwd_str, gateway_passwd_str) != 0) {
 				ret = clientAdminPasswdCheckErr;
 			}
@@ -718,6 +726,9 @@ int modify_password(cgiFormResultType cgi_result, const char * old_passwd_str, c
 		return clientAdminPasswdFileReadErr;
 	}
 	gateway_passwd[res] = '\0';
+	if((gateway_passwd[res-1] == 0x0a)||(gateway_passwd[res-1] == 0x0d)) {  //如果最后一个字符等于换行符号或者回车键
+		gateway_passwd[res-1] = '\0';
+	}
     // Check old password
 	res = check_password(cgi_result, old_passwd_str, gateway_passwd);
 	if (res != 0) {
@@ -909,6 +920,10 @@ int modify_alias(cgiFormResultType cgi_result, const char * old_alias_str, const
 		return clientAdminAliasFileReadErr;
 	}
 	gateway_alias[res] = '\0';
+	//add yanly150625
+	if((gateway_alias[res-1] == 0x0a)||(gateway_alias[res-1] == 0x0d)) {  //如果最后一个字符等于换行符号或者回车键，就换成结束符
+		gateway_alias[res-1] = '\0';
+	}
     // Check old alias
 	res = check_alias(cgi_result, old_alias_str, gateway_alias);
 	if (res != 0) {
