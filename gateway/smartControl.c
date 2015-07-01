@@ -3,9 +3,14 @@
  *  Created on  : Apr 20, 2015
  *  Author      : yanly
  *  Description : 定时，联动功能主循环
+ *
+ *  新增，删除设备时调用模块BaseDataUpload；
+ *  检测到报警时调用命令播放报警音乐；
+ *  修改报警联动检测callback为msgtype=7，安防设备触发的callback
  *  Version     : V01-00
  *  History     : <author>		<time>		<version>		<desc>
  */
+
 
 #include "unpthread.h"
 #include "timingCommon.h"
@@ -20,6 +25,8 @@
 #include "invokeBaseDataUpldPrm.h"
 
 #define  PROJECT_VERSION			"SmartControl-V01-00"
+#define  APP_NAME					"SmartControl"
+#define  APP_VERSION				"V01-01"
 
 #define  CB_HEART_BEAT_TIME			30   //30s
 #define  TIMEOUT_UNIT				5	 //(5s/unit)
@@ -60,12 +67,14 @@ static void list_time_remove_member_byid_lock(int id_value);
 static void list_time_printf_tid();
 //
 
+int system_to_do_mul_process(const char *string);
 int main()
 {
 	pthread_t timeloop_thread_id;
 	timed_action_t *time_action_cb;
 	timed_action_t *ta_enroll_check;
-	printf("---------%s---------\n", PROJECT_VERSION);
+	printf("===============%s version[%s], COMPILE_TIME[%s: %s]\n", APP_NAME, APP_VERSION, __DATE__, __TIME__);
+//	printf("---------%s---------\n", PROJECT_VERSION);
 	printf("------------------------------------------------\n");
 	printf("------------------------------------------------\n");
 	time_loop_init();
@@ -288,9 +297,11 @@ static void parse_json_callback(const char *text)
 {
 	cJSON *root;
 	cJSON *json_temp,*json_temp2;
-	int msgtype, mainid, subid,status, id_value, enable;
+	int msgtype, mainid, subid,status, id_value, enable,w_mode;
 	char *dev_ieee, *dev_ep, *attrname;
 	int attr_value;
+	int alarm1,alarm2;
+	char audio_play_string[]="mplayer -loop 0 123456789.wav";
 
 	time_list_st temp_member;
 	linkage_loop_st link_member;
@@ -537,7 +548,71 @@ static void parse_json_callback(const char *text)
 			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
     	break;
     	case DEV_ALARM_MSGTYPE:
-			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+//			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+//			if (!json_temp)
+//			{
+//				GDGL_DEBUG("json parse error\n");
+//				cJSON_Delete(root);
+//				return;
+//			}
+//			dev_ieee = json_temp->valuestring;
+//			json_temp = cJSON_GetObjectItem(root, "zone_ep");
+//			if (!json_temp)
+//			{
+//				GDGL_DEBUG("json parse error\n");
+//				cJSON_Delete(root);
+//				return;
+//			}
+//			dev_ep = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "w_mode");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			w_mode = atoi(json_temp->valuestring);
+//			json_temp = cJSON_GetObjectItem(root, "w_description");
+//			if (!json_temp)
+//			{
+//				GDGL_DEBUG("json parse error\n");
+//				cJSON_Delete(root);
+//				return;
+//			}
+			printf("w_mode=%d\n",w_mode);
+			if((w_mode<0)||(w_mode>13)) {
+				GDGL_DEBUG("w_mode invalid\n");
+				cJSON_Delete(root);
+				return;
+			}
+			//播放报警声音
+			snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%d", w_mode);
+			system("amixer set Headphone 127"); //音量调到最大
+			system("killall mplayer");
+			printf("killall mplayer\n");
+			system_to_do_mul_process(audio_play_string);
+			printf("%s\n",audio_play_string);
+//			attrname = json_temp->valuestring;
+//			attr_value = ALARM_LINKAGE_DEFAULT_V;
+			//检测报警联动条件
+//			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+    	break;
+    	case IAS_DEV_CHANGE_MSGTYPE:
+			json_temp = cJSON_GetObjectItem(root, "callbackType");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			status = json_temp->valueint;
+			if(status !=2)
+			{
+				GDGL_DEBUG("callbackType invalid\n");
+				cJSON_Delete(root);
+				return;
+			}
+			json_temp = cJSON_GetObjectItem(root, "IEEE");
 			if (!json_temp)
 			{
 				GDGL_DEBUG("json parse error\n");
@@ -545,7 +620,8 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			dev_ieee = json_temp->valuestring;
-			json_temp = cJSON_GetObjectItem(root, "zone_ep");
+			printf("ieee=%s\n",dev_ieee);
+			json_temp = cJSON_GetObjectItem(root, "EP");
 			if (!json_temp)
 			{
 				GDGL_DEBUG("json parse error\n");
@@ -553,16 +629,40 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			dev_ep = json_temp->valuestring;
-			json_temp = cJSON_GetObjectItem(root, "w_description");
+			printf("ieee=%s\n",dev_ep);
+			json_temp = cJSON_GetObjectItem(root, "value");
 			if (!json_temp)
 			{
 				GDGL_DEBUG("json parse error\n");
 				cJSON_Delete(root);
 				return;
 			}
-			attrname = json_temp->valuestring;
-			attr_value = ALARM_LINKAGE_DEFAULT_V;
-			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+			json_temp2 = cJSON_GetObjectItem(json_temp, "alerm1");
+			if (!json_temp2)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			alarm1 = json_temp2->valueint;
+			json_temp2 = cJSON_GetObjectItem(json_temp, "alerm2");
+			if (!json_temp2)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			alarm2 = json_temp2->valueint;
+			printf("alarm1=%d,alarm2=%d\n",alarm1,alarm2);
+			//检测联动条件
+			if((alarm1 ==1)||(alarm2 ==1))
+			{
+				list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V);
+			}
+			else
+			{
+				list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "normal", ALARM_LINKAGE_DEFAULT_V);
+			}
     	break;
     	case DEL_DEVICE_MSGTYPE:
 			json_temp = cJSON_GetObjectItem(root, "IEEE");
@@ -797,4 +897,22 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 	exit(0);
 	return 0;
 }
-
+int system_to_do_mul_process(const char *string)
+{
+	int res;
+	pid_t	pid;
+	if ((pid = fork()) > 0) {
+		waitpid(-1,NULL,0);
+		return(pid);				//parent process
+	}
+	if ((pid = fork()) > 0) {
+		exit(0);					//child process
+		return (pid);
+	}
+	res = system(string);
+	if(res <0) {
+		GDGL_DEBUG("system call failed,res is: %d\n", res);
+	}
+	exit(0);
+	return 0;
+}
