@@ -288,7 +288,7 @@ static void read_callback_data_handle(int confd)
 			return;		/* connection closed by other end */
 		}
 		read_data[nread] = '\0'; // add null
-		//GDGL_DEBUG("read data: %s\n", read_data);
+//		printf("read data[size:%d]: %s\n", nread,read_data);
 		//parse json
 		parse_json_callback(read_data);
 	}
@@ -303,6 +303,10 @@ static void parse_json_callback(const char *text)
 	int alarm1,alarm2;
 	char audio_play_string[]="mplayer -loop 0 123456789.wav";
 
+	//判断需不需要分包的标记
+	char need_parse_again_flag=0;
+	int next_size=0;
+
 	time_list_st temp_member;
 	linkage_loop_st link_member;
 
@@ -312,6 +316,38 @@ static void parse_json_callback(const char *text)
 		GDGL_DEBUG("parse root error\n");
 		return;
 	}
+	printf("recv source size=%d\n",strlen(text));
+	char *after1,*after2;
+	after1 = cJSON_Print(root);
+	after2 = cJSON_PrintUnformatted(root);
+//	printf("cJSON_Print size=%d\n",strlen(after1));
+//	printf("cJSON_PrintUnformatted size=%d\n",strlen(after2));
+	if((strlen(text) == strlen(after1) )||(strlen(text) == strlen(after2)))
+	{
+		need_parse_again_flag =0;
+	}
+	else
+	{  //分包
+//		printf("cJSON_Print next value:%x\n",text[strlen(after1)]);
+//		printf("cJSON_PrintUnformatted next value:%x\n",text[strlen(after2)]);
+		if(text[strlen(after1)] == '{')
+		{
+			need_parse_again_flag =1;
+			next_size = strlen(after1);
+		}
+		else if(text[strlen(after2)] == '{')
+		{
+			need_parse_again_flag =1;
+			next_size = strlen(after2);
+		}
+		else
+		{
+			GDGL_DEBUG("subcontract invalid\n");
+		}
+	}
+	free(after1);
+	free(after2);
+
 	json_temp = cJSON_GetObjectItem(root, FIELD_MSGTYPE);
     if (!json_temp)
     {
@@ -548,22 +584,22 @@ static void parse_json_callback(const char *text)
 			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
     	break;
     	case DEV_ALARM_MSGTYPE:
-//			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
-//			if (!json_temp)
-//			{
-//				GDGL_DEBUG("json parse error\n");
-//				cJSON_Delete(root);
-//				return;
-//			}
-//			dev_ieee = json_temp->valuestring;
-//			json_temp = cJSON_GetObjectItem(root, "zone_ep");
-//			if (!json_temp)
-//			{
-//				GDGL_DEBUG("json parse error\n");
-//				cJSON_Delete(root);
-//				return;
-//			}
-//			dev_ep = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ieee = json_temp->valuestring;
+			json_temp = cJSON_GetObjectItem(root, "zone_ep");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ep = json_temp->valuestring;
 			json_temp = cJSON_GetObjectItem(root, "w_mode");
 			if (!json_temp)
 			{
@@ -572,13 +608,13 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			w_mode = atoi(json_temp->valuestring);
-//			json_temp = cJSON_GetObjectItem(root, "w_description");
-//			if (!json_temp)
-//			{
-//				GDGL_DEBUG("json parse error\n");
-//				cJSON_Delete(root);
-//				return;
-//			}
+			json_temp = cJSON_GetObjectItem(root, "w_description");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
 			printf("w_mode=%d\n",w_mode);
 			if((w_mode<0)||(w_mode>13)) {
 				GDGL_DEBUG("w_mode invalid\n");
@@ -592,10 +628,10 @@ static void parse_json_callback(const char *text)
 			printf("killall mplayer\n");
 			system_to_do_mul_process(audio_play_string);
 			printf("%s\n",audio_play_string);
-//			attrname = json_temp->valuestring;
-//			attr_value = ALARM_LINKAGE_DEFAULT_V;
+			attrname = json_temp->valuestring;
+			attr_value = ALARM_LINKAGE_DEFAULT_V;
 			//检测报警联动条件
-//			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
     	break;
     	case IAS_DEV_CHANGE_MSGTYPE:
 			json_temp = cJSON_GetObjectItem(root, "callbackType");
@@ -707,6 +743,17 @@ static void parse_json_callback(const char *text)
     	default:break;
     }
 	cJSON_Delete(root);
+//如果有另一个包，触发多一次
+	if(need_parse_again_flag ==1)
+	{
+		if(next_size >0){
+			printf("need to parse again\n");
+			parse_json_callback(&text[next_size]);
+		}
+		else{
+			GDGL_DEBUG("next_size invalid\n");
+		}
+	}
 }
 /*
  * this fuction remove the member of the list_time[member]

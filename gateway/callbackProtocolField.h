@@ -57,6 +57,7 @@
 #define GL_MSGTYPE						0
 #define DEV_ATTRIBUTE_MSGTYPE			2
 #define DEV_ALARM_MSGTYPE				3
+#define IAS_DEV_CHANGE_MSGTYPE			7  //安防设备状态变化
 #define DEV_ENROLL_MSGTYPE				16
 #define DEV_UNENROLL_MSGTYPE			17
 #define NEW_ADDED_DEVICE_MSGTYPE		29
