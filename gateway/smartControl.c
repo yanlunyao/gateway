@@ -301,7 +301,7 @@ static void parse_json_callback(const char *text)
 	char *dev_ieee, *dev_ep, *attrname;
 	int attr_value;
 	int alarm1,alarm2;
-	char audio_play_string[]="mplayer -loop 0 123456789.wav";
+	char audio_play_string[100]={0};
 
 	//判断需不需要分包的标记
 	char need_parse_again_flag=0;
@@ -623,6 +623,7 @@ static void parse_json_callback(const char *text)
 			}
 			//播放报警声音
 			snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%d", w_mode);
+//			snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/vitory.mp3");
 			system("amixer set Headphone 127"); //音量调到最大
 			system("killall mplayer");
 			printf("killall mplayer\n");
