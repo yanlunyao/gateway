@@ -885,6 +885,7 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 	char send_cb_string[GL_CALLBACK_MAX_SIZE];
 	int send_cb_len;
 	int i;
+	int res; //add yanly150703
 
 	pid_t	pid;
 	if ((pid = fork()) > 0) {
@@ -901,7 +902,7 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		for(i=0; i<DEL_ID_MAX; i++) {
 			if(will_del_id[i] == 0)
 				break;
-			GDGL_DEBUG("will del id:%d\n",will_del_id[i]);
+			GDGL_DEBUG("will del tid:%d\n",will_del_id[i]);
 			if((send_cb_len = cJsonTimeAction_callback(send_cb_string, SUBID_DEL_TA, 1, will_del_id[i], NULL)) >=0) {
 				push_to_CBDaemon(send_cb_string, send_cb_len);
 				usleep(300000); //300ms //发送太快调试工具接收不到
@@ -916,8 +917,17 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		for(i=0; i<DEL_ID_MAX; i++) {
 			if(will_del_id[i] == 0)
 				break;
-			GDGL_DEBUG("will del id:%d\n",will_del_id[i]);
-			if(read_t_scene_base_byid(&base_buf, will_del_id[i]) <0) {
+			GDGL_DEBUG("will changed sid:%d\n",will_del_id[i]);
+			res = read_t_scene_base_byid(&base_buf, will_del_id[i]);
+			if(res <0) {
+				if(res == ERROR_MDFY_NO_ID_DB) //如果没有这条id规则了，代表这条规则已被删除，发送删除的callback
+				{
+					if((send_cb_len = cJsonDelDoScene_callback(send_cb_string, will_del_id[i], SUBID_DEL_SCENE, 1)) >=0) {
+						push_to_CBDaemon(send_cb_string, send_cb_len);
+						usleep(300000); //300ms //发送太快调试工具接收不到
+						GDGL_DEBUG("send scene success\n");
+					}
+				}
 				continue;
 			}
 			if((send_cb_len = cJsonScene_callback(send_cb_string, &base_buf, NULL, NULL, SUBID_EDIT_SCENE, 1)) >=0) {
@@ -933,7 +943,7 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		for(i=0; i<DEL_ID_MAX; i++) {
 			if(will_del_id[i] == 0)
 				break;
-			GDGL_DEBUG("will del id:%d\n",will_del_id[i]);
+			GDGL_DEBUG("will del lid:%d\n",will_del_id[i]);
 			if((send_cb_len = cJsonLinkage_callback(send_cb_string, SUBID_DEL_LINK, 1, will_del_id[i], NULL)) >=0) {
 				push_to_CBDaemon(send_cb_string, send_cb_len);
 				usleep(300000); //300ms //发送太快调试工具接收不到

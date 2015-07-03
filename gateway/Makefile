@@ -8,15 +8,18 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi  \
 		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi \
 		AddLinkage.cgi EditLinkage.cgi DelLinkage.cgi GetLinkageList.cgi EnableLinkage.cgi \
+		ui_daemon \
 		#siftCallback_daemon \
 		net_stat bind_daemon 
-		
+
+USER_MANAGE_API = clientLogin.cgi modifyPassword.cgi modifyAlias.cgi 		
 TIME_API = AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi
 SCENE_API = AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi
 LINKAGE_API = AddLinkage.cgi EditLinkage.cgi DelLinkage.cgi GetLinkageList.cgi EnableLinkage.cgi
 APPLICATION_API = ${TIME_API} ${SCENE_API} ${LINKAGE_API}
 
 all:	${PROGS}
+usermanage:	${USER_MANAGE_API}
 time:	${TIME_API}
 scene:	${SCENE_API}
 linkage:	${LINKAGE_API}
@@ -50,7 +53,8 @@ modifyAlias.cgi:	modifyAlias.o clientAdmin.o cgic.o cJSON.o lockreg.o glCalkProt
 #cloudProxyHttpModule
 cloudProxyHttpModule:	cloudProxyHttpModule.o cJSON.o
 		${CC} ${CFLAGS} -o $@ cloudProxyHttpModule.o cJSON.o ${LIBS} -lm -lcurl
-
+		cp cloudProxyHttpModule /home/mac/nfs_share/yanlyFolder/special/
+		
 #clientadmin_daemon
 clientadmin_daemon:	clientadmin_daemon.o cJSON.o lockreg.o glCalkProtocol.o
 		${CC} ${CFLAGS} -o $@ clientadmin_daemon.o cJSON.o lockreg.o glCalkProtocol.o ${LIBS} -lm
@@ -63,6 +67,11 @@ net_stat: net_stat.o
 bind_daemon: bind_daemon.o cJSON.o 
 		${CC} ${CFLAGS} -o $@ bind_daemon.o cJSON.o ${LIBS} -lm
 
+#ui_daemon
+ui_daemon:	ui_daemon.o cJSON.o httpCurlMethod.o
+		${CC} ${CFLAGS} -o $@ ui_daemon.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
+		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/
+		
 #siftCallback_daemon
 #siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
 #		${CC} ${CFLAGS} -o $@ siftCallback_daemon.o cJSON.o timedaction.o ${LIBS} -lm
@@ -70,7 +79,7 @@ bind_daemon: bind_daemon.o cJSON.o
 #BaseDateUpload
 BaseDataUpload:	baseDataUpload.o cJSON.o httpCurlMethod.o
 		${CC} ${CFLAGS} -o $@ baseDataUpload.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
-		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
+#		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
 		
 #SmartControl
 SmartControl:	smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o
@@ -134,7 +143,10 @@ EnableLinkage.cgi:	enableLinkage.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o 
 ##############################################################################################   //invoke api upload daemon cgi
 CallUploadDataProgram.cgi:	callUploadDataProgram.o cgic.o cJSON.o 
 		${CC} ${CFLAGS} -o $@ callUploadDataProgram.o cgic.o cJSON.o ${LIBS} -lm
-		cp CallUploadDataProgram.cgi /home/mac/nfs_share/yanlyFolder/Upload/
+#		cp CallUploadDataProgram.cgi /home/mac/nfs_share/yanlyFolder/Upload/
+StopAlarm.cgi:	stopAlarm.o cgic.o cJSON.o httpCurlMethod.o
+		${CC} ${CFLAGS} -o $@ stopAlarm.o cgic.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
+		cp StopAlarm.cgi /home/mac/nfs_share/yanlyFolder/Upload/
 ########################################test################################################
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
@@ -152,7 +164,12 @@ CallUploadDataProgram.cgi:	callUploadDataProgram.o cgic.o cJSON.o
 		
 cp_application_api:
 		cp ${APPLICATION_API} /home/mac/nfs_share/yanlyFolder/application/
-
+cp_user_api:
+		cp ${USER_MANAGE_API} /home/mac/nfs_share/yanlyFolder/usermanage/
+cp_upload:
+		cp BaseDataUpload SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
+cp_ui:	
+		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/	
 clean:
 		rm -f ${PROGS} ${CLEANFILES} *.o
 		

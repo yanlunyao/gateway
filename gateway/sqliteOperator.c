@@ -1455,6 +1455,81 @@ int del_timeaction_by_isdeletedieee(int *id, const char *del_ieee)
 	}
 	return (res = 1);
 }
+//int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
+//{
+//	int res;
+//	char *errmsg;
+//	char **result;
+//	int row, col, index,j;
+//	int id_total;
+//	char scnaction[SCENEACTION_MAX_LEN]={0};
+//	char last_scnaction[SCENEACTION_MAX_LEN]={0};
+//	char sql[SQL_STRING_MAX_LEN];
+//	const char *querySql = "SELECT DISTINCT sid FROM t_scene_act WHERE actobj='%s'";
+//	const char *queryActpara = "SELECT actpara FROM t_scene_act WHERE sid=%d";
+//	const char *delSql = "DELETE FROM t_scene_act WHERE actobj='%s'";
+//	const char *updateSql = "UPDATE t_scene SET scnaction='%s' WHERE sid = %d";
+//
+//	//read id
+//	sprintf(sql, querySql, del_ieee);
+//    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
+//    	GDGL_DEBUG("read db failed:%s\n",errmsg);
+//		return (res = ERROR_READ_DB);
+//    }
+//    if(row ==0){ sqlite3_free_table(result); return (res = 0);}
+//	index = col;
+//    for(j=0; j<row; j++){ id[j] = atoi(result[index]); index += col;}
+//    id[row] = 0; id_total = row;
+//	sqlite3_free_table(result);
+//
+//	//delete
+//	sprintf(sql, delSql, del_ieee);
+////	printf("del sql is %s\n",sql);
+//	res = t_update_delete_and_change_check(db, sql);
+//	if(res <0)
+//		return res;
+//
+//	//read actpara of t_scene_atc
+//	int i;
+//	for(i=0; i < id_total; i++) {
+//		sprintf(sql, queryActpara, id[i]);
+////		printf("query sql is %s\n",sql);
+//	    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
+//	    	GDGL_DEBUG("read db failed:%s\n",errmsg);
+//			return (res = ERROR_READ_DB);
+//	    }
+//	    if(row ==0){
+////	    	GDGL_DEBUG("row is zero,id=%d\n",id[i]);
+//	    	sprintf(sql, updateSql, scnaction, id[i]);
+//	    	res = t_update_delete_and_change_check(db, sql);
+//	    	if(res< 0) {
+//	    		GDGL_DEBUG("update failed\n");
+//	    	}
+//	    	sqlite3_free_table(result);
+//	    	continue;
+//	    }
+//		index = col;
+//	    for(j=0; j<row; j++){
+//	    	if(j ==0) {
+//	    		snprintf(scnaction, SCENEACTION_MAX_LEN, "%s", result[index]);
+//	    	}
+//	    	else{
+//	    		snprintf(scnaction, SCENEACTION_MAX_LEN, "%s@%s", last_scnaction, result[index]);
+//	    	}
+//	    	strcpy(last_scnaction, scnaction);
+//	    	index += col;
+//	    }
+//	    //update t_scene
+////	    printf("scnaction is %s\n",scnaction);
+//	    sprintf(sql, updateSql, scnaction, id[i]);
+//	    res = t_update_delete_and_change_check(db, sql);
+//	    if(res<0){
+//	    	GDGL_DEBUG("update failed\n");
+//	    }
+//	    sqlite3_free_table(result);
+//	}
+//	return (res = 1);
+//}
 int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 {
 	int res;
@@ -1470,7 +1545,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	const char *delSql = "DELETE FROM t_scene_act WHERE actobj='%s'";
 	const char *updateSql = "UPDATE t_scene SET scnaction='%s' WHERE sid = %d";
 
-	//read id
+	//读有多少条规则含有此设备
 	sprintf(sql, querySql, del_ieee);
     if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
     	GDGL_DEBUG("read db failed:%s\n",errmsg);
@@ -1482,9 +1557,9 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
     id[row] = 0; id_total = row;
 	sqlite3_free_table(result);
 
-	//delete
+	printf("%d sid rule have this device\n",id_total);
+	//删除t_scene_act表里包含此设备的记录
 	sprintf(sql, delSql, del_ieee);
-//	printf("del sql is %s\n",sql);
 	res = t_update_delete_and_change_check(db, sql);
 	if(res <0)
 		return res;
@@ -1493,14 +1568,15 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	int i;
 	for(i=0; i < id_total; i++) {
 		sprintf(sql, queryActpara, id[i]);
-//		printf("query sql is %s\n",sql);
 	    if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
 	    	GDGL_DEBUG("read db failed:%s\n",errmsg);
 			return (res = ERROR_READ_DB);
 	    }
 	    if(row ==0){
-//	    	GDGL_DEBUG("row is zero,id=%d\n",id[i]);
-	    	sprintf(sql, updateSql, scnaction, id[i]);
+	    	//增加判断，如果scnaction为空时，删除此场景规则
+	    	GDGL_DEBUG("the scnaction of this sid[%d] rule is null\n",id[i]);
+	    	sprintf(sql, "DELETE FROM t_scene WHERE sid='%d'", id[i]);
+//	    	sprintf(sql, updateSql, scnaction, id[i]);
 	    	res = t_update_delete_and_change_check(db, sql);
 	    	if(res< 0) {
 	    		GDGL_DEBUG("update failed\n");
@@ -1509,6 +1585,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	    	continue;
 	    }
 		index = col;
+		//重新组合scnaction
 	    for(j=0; j<row; j++){
 	    	if(j ==0) {
 	    		snprintf(scnaction, SCENEACTION_MAX_LEN, "%s", result[index]);
@@ -1520,7 +1597,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	    	index += col;
 	    }
 	    //update t_scene
-//	    printf("scnaction is %s\n",scnaction);
+	    printf("scnaction is %s\n",scnaction);
 	    sprintf(sql, updateSql, scnaction, id[i]);
 	    res = t_update_delete_and_change_check(db, sql);
 	    if(res<0){
@@ -1528,7 +1605,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	    }
 	    sqlite3_free_table(result);
 	}
-	return (res = 1);
+	return 1;
 }
 int del_linkage_by_isdeletedieee(int *id, const char *del_ieee)
 {
