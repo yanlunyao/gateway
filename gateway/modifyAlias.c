@@ -101,6 +101,8 @@ int cgiMain()
 		return res;
 	}
 
+	//增解逻辑：kill模块gdgl_channel
+	system("killall gdgl_channel");
     // all right	
     client_admin_response(gateway_id, clientAdminSuccess, clientAdminResultStr[clientAdminSuccess]);
 	return 0;
