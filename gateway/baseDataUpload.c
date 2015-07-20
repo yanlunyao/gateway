@@ -4,9 +4,17 @@
  *  Author      : yanly
  *  Description : 获取相关api返回信息，并上传到云代理
  *  			  相关api：getendpoint，getAllRoomInfo，getIPClist，localIASCIEOperation，GetLocalCIEList，GetAllBindList
+ *  			  增加上传网关软硬件版本信息；
  *  Version     :
  *  History     : <author>		<time>		<version>		<desc>
  */
+
+/*
+ * 模块使用方法：
+ * 执行命令：BaseDataUpload <参数1> <参数2> ...
+ * 参数1：api的num，非必须,发送全部api时，留空。
+ * 参数2：api需要引入的参数，非必须。
+ * */
 
 #include "unp.h"
 #include <stdio.h>
@@ -23,7 +31,7 @@
 
 
 #define USE_LIBCURL
-#define APP_VERSION			"V01-00"
+#define APP_VERSION			"V01-01"
 
 //#define DEBUG_SOCKET_TCP_TESTER
 #ifdef	DEBUG_SOCKET_TCP_TESTER
@@ -39,14 +47,16 @@
 #define GET_CIELIST_NUM						5
 #define GET_ALLBINDLIST_NUM					6
 #define GET_IEEEENDPOINT_NUM				7
-#define API_AMOUNT							GET_IEEEENDPOINT_NUM
+#define GET_SW_VERSION_NUM					8
+#define GET_HW_VERSION_NUM					9
+#define API_AMOUNT							GET_HW_VERSION_NUM
 
 #define RECONNECT_MAX_CNT					20
 
 //////////////////
 int reconnect_cnt =0;  //重连云代理次数，重连超过20次后，延时1小时候再重连。
 
-char api_all_upload_enable[API_AMOUNT] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00}; //上传所有api返回结果集，1表示需要，0表示不需要
+char api_all_upload_enable[API_AMOUNT] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01}; //基础数据上传所有api返回结果集，1表示需要，0表示不需要
 
 #ifdef USE_LIBCURL
 char sift_api[][URL_STRING_LEN] = {
@@ -57,6 +67,8 @@ char sift_api[][URL_STRING_LEN] = {
 	"http://127.0.0.1/cgi-bin/rest/network/GetLocalCIEList.cgi?callback=1234&encodemethod=NONE&sign=AAA",
 	"http://127.0.0.1/cgi-bin/rest/network/GetAllBindList.cgi?callback=1234&encodemethod=NONE&sign=AAA",
 	"http://127.0.0.1/cgi-bin/rest/network/getIeeeEndPoint.cgi?callback=1234&encodemethod=NONE&sign=AAA&ieee=", //需要读取参数，动态上传的api respond
+	"http://127.0.0.1/cgi-bin/rest/network/GetSwVersion.cgi",
+	"http://127.0.0.1/cgi-bin/rest/network/GetHwVersion.cgi",
 	"\0"
 };
 #else
@@ -129,9 +141,13 @@ int main(int argc, char* argv[])
 //			GDGL_DEBUG("entry parameter invalid\n");
 		}
 		else if(entry_para == GET_IEEEENDPOINT_NUM) {
-			strcat(sift_api[entry_para-1], argv[2]); //+ ieee值
-			GDGL_DEBUG("url_str: %s\n", sift_api[entry_para-1]);
-			res = invoke_api_and_upload(sift_api[entry_para-1], entry_para);
+			if(argv[2] != NULL) {
+				strcat(sift_api[entry_para-1], argv[2]); //+ ieee值
+				GDGL_DEBUG("url_str: %s\n", sift_api[entry_para-1]);
+				res = invoke_api_and_upload(sift_api[entry_para-1], entry_para);
+			}
+			else
+				GDGL_DEBUG("GET_IEEEENDPOINT_NUM parameter2 invalid\n");
 		}
 		else {
 			GDGL_DEBUG("url_str: %s\n", sift_api[entry_para-1]);
@@ -140,7 +156,7 @@ int main(int argc, char* argv[])
 	}
 
 	curl_global_cleanup();
-	printf("=========================================upload api msg over=================================================\n");
+	printf("===============upload api msg over\n");
 	return 0;
 }
 
@@ -226,6 +242,7 @@ void wati_server_init_ok()
 		GDGL_DEBUG("connect error, push addr:%s,port:%d\n",PUSH_SERVER_IP,FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT);
 		reconnect_cnt++;
 		if(reconnect_cnt > RECONNECT_MAX_CNT) {
+			GDGL_DEBUG("sleep 3600 second\n");
 			sleep(3600);
 			reconnect_cnt = 0;
 		}
