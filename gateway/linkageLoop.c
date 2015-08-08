@@ -16,7 +16,7 @@
 #include "httpSocketRaw.h"
 #include "timedaction.h"
 
-#define LINK_EFFECT_TIME		1	//1s
+#define LINK_EFFECT_TIME		3	//1s
 
 list_linkage_st linkage_loop_head;
 //list_linkage_st *linkage_loop;
@@ -47,6 +47,7 @@ void linkage_traverse_printf()
 		printf("operator:%s\n", linkage_pos->linkage_member.operator);
 		printf("value:%d\n", linkage_pos->linkage_member.value);
 		printf("effect status:%d\n", linkage_pos->linkage_member.effect_status);
+		printf("actiontype:%d\n", linkage_pos->linkage_member.actiontype);
 		printf("~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	}
 }
@@ -135,7 +136,7 @@ static int flag_of_operator(char *opt)
 	return -1;
 }
 
-void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, int value)
+void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, int value, char *time_para)
 {
 	struct list_head *pos, *next;
 	list_linkage_st *member;
@@ -185,7 +186,15 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 			    	exit(1);
 			    }
 				GDGL_DEBUG("linkage trigger, lid=%d, ieee=%s, attribute=%s, opt=%s, value=%d\n",member->linkage_member.lid,ieee,attr,member->linkage_member.operator,value);
-				execute_url_action(LINkAGE_TABLE_FLAG, member->linkage_member.lid);
+				GDGL_DEBUG("actiontype=%d\n", member->linkage_member.actiontype);
+				if(member->linkage_member.actiontype == IPC_CAPTURE_ACT_TYPE)	//如果是截图的操作，重新组合url串
+				{
+					execute_ipccapture_url(LINkAGE_TABLE_FLAG, member->linkage_member.lid, time_para);
+				}
+				else
+				{
+					execute_url_action(LINkAGE_TABLE_FLAG, member->linkage_member.lid);
+				}
 			}
 		}
 	}

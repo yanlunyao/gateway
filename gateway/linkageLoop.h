@@ -34,5 +34,5 @@ void list_linkage_add_member(linkage_loop_st member);
 char list_linkage_edit_member(linkage_loop_st member);
 char list_linkage_remove_member_byid(int id_value);
 void release_list_linkage();
-void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, int value);
+void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, int value, char *time);
 #endif /* LINKAGELOOP_H_ */
