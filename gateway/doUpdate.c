@@ -16,7 +16,6 @@
 #include "cJSON.h"
 #include "cgic.h"
 #include "glCalkProtocol.h"
-
 int cgiMain()
 {
 	int res=0;
@@ -45,6 +44,11 @@ int cgiMain()
 	}
 	else
 	{												//child process
+//		int res;
+//		printf("/sbin/reboot\n");
+//		res = system("/sbin/reboot");
+//		printf("res=%d\n",res);
+//		printf("[failed], errno[%d], error msg[%s]\n", errno, strerror(errno));
 		//重定向输入输出流
 		freopen("/dev/null", "r", stdin);
 		freopen("/dev/null", "w", stdout);

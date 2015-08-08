@@ -65,6 +65,8 @@ int cgiMain()
         if(!json_all)
         {
         	res = 2;
+            fcntl(fd, F_SETLK, file_lock(F_UNLCK, SEEK_SET));
+            fclose(fp);
         	goto over;
         }
         file_buf[file_size] = '\0';

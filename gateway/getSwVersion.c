@@ -63,6 +63,8 @@ int cgiMain()
         json_all = cJSON_Parse(file_buf);
         if(!json_all)
         {
+            fcntl(fd, F_SETLK, file_lock(F_UNLCK, SEEK_SET));
+            fclose(fp);
         	res = 2;
         	goto over;
         }
