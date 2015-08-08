@@ -35,11 +35,13 @@
 #define APP_NAME			"ui_daemon"
 #define APP_VERSION			"V2.0"
 
-//#define KEY_SET             '2'
 #define KEY_RST             '1'
 #define KEY_CLR				'2'
+#define KEY_SET             KEY_RST
 #define KEY_STAT_RELEASE    0
 #define KEY_STAT_PRESS      1
+#define KEY_CLR_CODE		1
+#define KEY_SET_CODE		352
 
 #define FUNC_1_TIME         3   // s，重置用户信息长按时间
 #define FUNC_2_TIME         10  // s，恢复出厂设置长按时间
@@ -174,8 +176,8 @@ int main()
         {
 //            case KEY_1: key = '1'; break;
 //            case KEY_2: key = '2'; break;
-            case 1: key = '1'; break;  //modify by yanly150611
-            case 102: key = '2';printf("bingo\n"); break;
+            case KEY_CLR_CODE: key = KEY_CLR; break;  //modify by yanly150611
+            case KEY_SET_CODE: key = KEY_SET; break;
             default: break;
         }
 
@@ -230,28 +232,6 @@ int main()
 //
 //            close(socket_fd);
 //        }
-        //RST键，按一下实现入网功能；
-		if (key == KEY_RST && key_state == KEY_STAT_RELEASE)
-		{
-			printf("call SetAllPermitJoinOn.cgi\n");
-
-			if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
-			{
-				close(socket_fd);
-				printf("socket create error\n");
-				continue;
-			}
-
-			if (connect(socket_fd, (struct sockaddr*)&remote_addr, sizeof(struct sockaddr)) < 0)
-			{
-				close(socket_fd);
-				printf("socket connect error\n");
-				continue;
-			}
-			send(socket_fd, SetAllPermitJoinOn, strlen(SetAllPermitJoinOn), 0);
-			close(socket_fd);
-		}
-		//
         if (key == KEY_RST)
         {
             if (key_state == KEY_STAT_PRESS)
@@ -285,6 +265,7 @@ int main()
 #if BUILD_RELEASE_VERSION
                     printf("reboot\n");
                     system("reboot");
+                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
 #else
                     printf("reboot\n");
                     system("echo none > /sys/class/leds/12/trigger");
@@ -302,6 +283,7 @@ int main()
 #if BUILD_RELEASE_VERSION
                     printf("reboot\n");
                     system("reboot");
+                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
 #else
                     printf("reboot\n");
                     system("echo none > /sys/class/leds/12/trigger");
@@ -309,6 +291,27 @@ int main()
                 }
             }
         }
+        //rst键，按一下实现入网功能
+		if (key == KEY_RST && key_state == KEY_STAT_RELEASE)
+		{
+			printf("call SetAllPermitJoinOn.cgi\n");
+
+			if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+			{
+				close(socket_fd);
+				printf("socket create error\n");
+				continue;
+			}
+
+			if (connect(socket_fd, (struct sockaddr*)&remote_addr, sizeof(struct sockaddr)) < 0)
+			{
+				close(socket_fd);
+				printf("socket connect error\n");
+				continue;
+			}
+			send(socket_fd, SetAllPermitJoinOn, strlen(SetAllPermitJoinOn), 0);
+			close(socket_fd);
+		}
     }
     close(fd);
     curl_global_cleanup();
@@ -327,7 +330,7 @@ void* thrd_func(void* arg)
             f_block = true;
             printf("reset account\n");
 //            system("echo timer > /sys/class/leds/12/trigger");
-            system("echo timer > /sys/class/leds/user_led1/trigger"); //modify by yanly160611
+            system("echo timer > /sys/class/leds/sys_led/trigger");
             ret = rst_req(RstAccount, sizeof(RstAccount));
             if (ret == 0)
             {
@@ -358,35 +361,46 @@ void* thrd_func(void* arg)
             printf("reset factory setting\n");
 //            system("echo 80 > /sys/class/leds/12/delay_on");
 //            system("echo 80 > /sys/class/leds/12/delay_off");
-            system("echo 80 > /sys/class/leds/user_led1/delay_on");  //modify yanly150611
-            system("echo 80 > /sys/class/leds/user_led1/delay_off");
+            system("echo 80 > /sys/class/leds/sys_led/delay_on");
+            system("echo 80 > /sys/class/leds/sys_led/delay_off");
             ret = rst_req(RstFactory, sizeof(RstFactory));
-            if (ret == 0)
+            if (ret == 0)// 服务器恢复出厂设置成功，网关也进行恢复操作
             {
-                // 服务器恢复出厂设置成功，网关也进行恢复操作
+
+//	1. 恢复初始用户名密码信息(程序进行到这里，这一步骤已在上一步完成)
+//	2. zigbee恢复出厂设置
+//	3. 清空大洋配置文件：rm -rf /mnt/jffs2/*，cp -rf /gl/backup/* /mnt/jffs2/
+//	4. 删除视频设备配置信息数据库：/gl/etc/video/video_conf.db
+//	5. 删除定时场景联动数据库：/gl/etc/database/application.db
+//	6. 删除RF设备列表信息文件：/gl/etc/rf_dev.json
+//	7. 删除绑定列表信息: /gl/etc/bindlist.json，/gl/etc/binddev.json
+            	/*
+            	 * 2. 恢复网关zigbee出厂设置：
+            	 * （1）停止zigbee供电
+            	 * （2）控制zigbee按键按下
+            	 * （3）控制zigbee灯变暗
+            	 * （4）恢复zigbee供电
+            	 * （5）停止按zigbee按键
+            	 * （6）延时1s
+            	 * （7）停止zigbee供电
+            	 * （8）控制zigbee灯变亮
+            	 * （9）恢复zigbee供电
+            	 * */
                 printf("reset factory setting success\n");
-                system("rm -rf /gl/etc/FactorySetting");
-
+//                system("rm -rf /gl/etc/FactorySetting");
                 // for debug 
-                system("touch /gl/etc/FactoryReset-`date +%Y%m%d%H%M%S`");
+//                system("touch /gl/etc/FactoryReset-`date +%Y%m%d%H%M%S`");
+                printf("execute factory reset shell\n");
+                system("/gl/bin/factory_reset.sh");
+//                system("rm -rf /mnt/jffs2/*");
+//                system("cp -rf /gl/backup/* /mnt/jffs2/");
 
-                // 清空大洋配置文件
-                system("rm -rf /mnt/jffs2/*");
-                system("cp -rf /gl/backup/* /mnt/jffs2/");
-
-
-
-                /* TODO:
-                 * 上面的操作对于ZigBee设备恢复出厂设置不够彻底。
-                 * 完成上面的操作后，所有ZigBee设备仍在同一个ZigBee网络内。
-                 * 当某个设备重新上电或被激活或与协调器通信后，该设备又会重新出现在设备列表中；
-                 * 设备的绑定信息被保存在输出簇的设备中，因此绑定控制仍然有效。
-                 */
-
-                // 删除视频设备配置信息
-                system("rm -rf /gl/etc/video/video_conf.db");
-                // 删除联动等应用数据库信息
-                system("rm -rf /gl/etc/database/application.db"); //add by yanly150611
+//                /* TODO:
+//                 * 上面的操作对于ZigBee设备恢复出厂设置不够彻底。
+//                 * 完成上面的操作后，所有ZigBee设备仍在同一个ZigBee网络内。
+//                 * 当某个设备重新上电或被激活或与协调器通信后，该设备又会重新出现在设备列表中；
+//                 * 设备的绑定信息被保存在输出簇的设备中，因此绑定控制仍然有效。
+//                 */
             }
             else
             {
