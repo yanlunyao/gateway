@@ -131,6 +131,14 @@ int timed_action_unschedule(timed_action_notifier* notifier, timed_action_t* act
     int ret = epoll_ctl(notifier->epfd, EPOLL_CTL_DEL, action->tfd, NULL);
     ret = MIN(timer_set_expiry(action->tfd, 0, 0, 0, 0), ret);
     ret = MIN(close(action->tfd), ret);
-
+//    timed_action_free(action);  //may be need to add this fuction, but dont infect some program, dont to add first //yanly150813
     return ret;
 }
+void timed_action_free(timed_action_t* action)
+{
+	if(action !=NULL) {
+		free(action);
+//		action = NULL; //对传入的指针本身不起作用
+	}
+}
+

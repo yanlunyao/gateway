@@ -11,6 +11,7 @@
 #include "unpthread.h"
 #include "smartgateway.h"
 #include "invokeBaseDataUpldPrm.h"
+#include "baseDataUpload.h"
 
 #define EXEC_PROGRAM_PATH		"/gl/bin/BaseDataUpload"
 
@@ -64,7 +65,7 @@ pid_t invoke_by_datatype_fork(int datatype, const char *para)
 		return (pid);
 	}
 							//grandson process
-	if(datatype >DATATYPE_MAX) {
+	if(datatype >API_AMOUNT) {
 		GDGL_DEBUG("datatype invalid\n");
 		exit(1) ;
 	}

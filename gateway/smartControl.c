@@ -9,6 +9,7 @@
  *  修改报警联动检测callback为msgtype=7，安防设备触发的callback
  *  Version     : V01-00
  *  History     : <author>		<time>		<version>		<desc>
+ *  			  yanly		    150806		V01-01			增加RF设备相关逻辑：支持联动，RF设备列表更新时上传服务器
  */
 
 
@@ -23,6 +24,7 @@
 #include "timedaction.h"
 #include "linkageLoop.h"
 #include "invokeBaseDataUpldPrm.h"
+#include "baseDataUpload.h"
 
 #define  PROJECT_VERSION			"SmartControl-V01-00"
 #define  APP_NAME					"SmartControl"
@@ -44,6 +46,19 @@ volatile char dev_enroll_flag =0;     //设备enroll的标记
 volatile char dev_enroll_timeout =0; //标记的超时时间
 volatile char dev_unenroll_flag =0;     //设备unenroll的标记
 volatile char dev_unenroll_timeout =0; //标记的超时时间
+
+//播放报警音乐的文件名字
+const char *alarm_music_name[9] = {"burglar",
+		"emergency",
+		"fire",
+		"gas",
+		"stop",
+		"water",
+		"lowbattery",
+		"devicetrouble",
+		"doorbell"};
+const unsigned char zigbee_wmode_map[] = {4, 0, 2, 1, 0xff, 7, 8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 6}; //0xff为无效，表示这个报警的w_mode不用声音报警
+const unsigned char rf_wmode_map[] = {1, 3, 2, 0xff, 0xff, 0xff, 0xff, 5, 0xff, 0xff, 0, 0xff, 6, 0xff};
 
 //
 void app5s_task(void *arg);
@@ -298,7 +313,7 @@ static void parse_json_callback(const char *text)
 	cJSON *root;
 	cJSON *json_temp,*json_temp2;
 	int msgtype, mainid, subid,status, id_value, enable,w_mode;
-	char *dev_ieee, *dev_ep, *attrname;
+	char *dev_ieee, *dev_ep, *attrname, *warntime;
 	int attr_value;
 	int alarm1,alarm2;
 	char audio_play_string[100]={0};
@@ -358,19 +373,19 @@ static void parse_json_callback(const char *text)
     msgtype = json_temp->valueint;
     switch (msgtype) {
     	case GL_MSGTYPE:										//gl的msgtype
-	    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有广联msgtype都有status字段才可以这样做
-			if (!json_temp)
-			{
-				GDGL_DEBUG("json parse error\n");
-				cJSON_Delete(root);
-				return;
-			}
-			status = json_temp->valueint;
-			if(status <0) {
-    	    	GDGL_DEBUG("json status invaild\n");
-    	    	cJSON_Delete(root);
-    	    	return;
-			}
+//	    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有广联msgtype都有status字段才可以这样做
+//			if (!json_temp)
+//			{
+//				GDGL_DEBUG("json parse error\n");
+//				cJSON_Delete(root);
+//				return;
+//			}
+//			status = json_temp->valueint;
+//			if(status <0) {
+//    	    	GDGL_DEBUG("json status invaild\n");
+//    	    	cJSON_Delete(root);
+//    	    	return;
+//			}
     		json_temp = cJSON_GetObjectItem(root, FIELD_MAINID);
     	    if (!json_temp)
     	    {
@@ -381,6 +396,19 @@ static void parse_json_callback(const char *text)
     	    mainid = json_temp->valueint;					//解析mainid
     	    switch (mainid) {
     	    	case MAINID_TIMEACTION:
+    		    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有广联定时都有status字段才可以这样做
+    				if (!json_temp)
+    				{
+    					GDGL_DEBUG("json parse error\n");
+    					cJSON_Delete(root);
+    					return;
+    				}
+    				status = json_temp->valueint;
+    				if(status <0) {
+    	    	    	GDGL_DEBUG("json status invaild\n");
+    	    	    	cJSON_Delete(root);
+    	    	    	return;
+    				}
     	    		json_temp = cJSON_GetObjectItem(root, FIELD_TID);
 					if (!json_temp)
 					{
@@ -466,6 +494,19 @@ static void parse_json_callback(const char *text)
     	    	break;
 
     	    	case MAINID_LINKAGE:
+    		    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有联动都有status字段才可以这样做
+    				if (!json_temp)
+    				{
+    					GDGL_DEBUG("json parse error\n");
+    					cJSON_Delete(root);
+    					return;
+    				}
+    				status = json_temp->valueint;
+    				if(status <0) {
+    	    	    	GDGL_DEBUG("json status invaild\n");
+    	    	    	cJSON_Delete(root);
+    	    	    	return;
+    				}
 					json_temp = cJSON_GetObjectItem(root, FIELD_LID);
 					if(!json_temp) {
 						GDGL_DEBUG("json parse error\n");
@@ -545,6 +586,115 @@ static void parse_json_callback(const char *text)
 						default:break;
 					}
     	    	break;
+    	    	case MAINID_RF:
+#ifdef USE_RF_FUNCTION
+					json_temp = cJSON_GetObjectItem(root, FIELD_SUBID);
+					if(!json_temp) {
+						GDGL_DEBUG("json parse error\n");
+						cJSON_Delete(root);
+						return;
+					}
+					subid = json_temp->valueint;			//解析subid(rf)
+					switch(subid) {
+						case SUBID_RF_ALARM:
+							json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							dev_ieee = json_temp->valuestring;
+							json_temp = cJSON_GetObjectItem(root, "zone_ep");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							dev_ep = json_temp->valuestring;
+							json_temp = cJSON_GetObjectItem(root, "w_mode");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							w_mode = atoi(json_temp->valuestring);
+							json_temp = cJSON_GetObjectItem(root, "w_description");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							attrname = json_temp->valuestring;
+							printf("rf w_description=%s\n",attrname);
+
+							if(w_mode <sizeof(rf_wmode_map)) {
+								if(rf_wmode_map[w_mode] != 0xff) { //0xff无效
+									//播放报警声音
+//									snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", attrname);
+									snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[rf_wmode_map[w_mode]]);
+									system("killall mplayer");
+									printf("killall mplayer\n");
+									system_to_do_mul_process(audio_play_string);
+									printf("%s\n",audio_play_string);
+
+									json_temp = cJSON_GetObjectItem(root, "time");
+									if (!json_temp)
+									{
+										GDGL_DEBUG("json parse error\n");
+										cJSON_Delete(root);
+										return;
+									}
+									warntime = json_temp->valuestring;
+									printf("rf warntime=%s\n",warntime);
+									//检测报警联动条件
+									list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, ALARM_LINKAGE_DEFAULT_V, warntime);
+								}
+							}
+						break;
+						case SUBID_RF_OPEN_STATE_CHGE:
+							json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							dev_ieee = json_temp->valuestring;
+							json_temp = cJSON_GetObjectItem(root, "zone_ep");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							dev_ep = json_temp->valuestring;
+							json_temp = cJSON_GetObjectItem(root, "w_description");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							attrname = json_temp->valuestring;
+							printf("rf open close state w_description=%s\n",attrname);
+							if(strcasecmp(attrname, "door close") ==0)
+								list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "normal", ALARM_LINKAGE_DEFAULT_V, NULL);
+							else
+								list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V, NULL);
+						break;
+						case SUBID_RF_ACTIVATE_STATE_CHGE:
+						break;
+						case SUBID_RF_LIST_CHGE:
+							invoke_by_datatype_fork(GET_RF_LIST_NUM, NULL);
+						break;
+						default: break;
+					}
+    	    	break;
+#endif
     	    	default:break;
     	    }
     	break;
@@ -581,7 +731,7 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			attr_value = atoi(json_temp->valuestring);
-			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value, NULL);
     	break;
     	case DEV_ALARM_MSGTYPE:
 			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
@@ -615,24 +765,29 @@ static void parse_json_callback(const char *text)
 				cJSON_Delete(root);
 				return;
 			}
-			printf("w_mode=%d\n",w_mode);
-			if((w_mode<0)||(w_mode>13)) {
-				GDGL_DEBUG("w_mode invalid\n");
-				cJSON_Delete(root);
-				return;
-			}
-			//播放报警声音
-			snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%d", w_mode);
-//			snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/vitory.mp3");
-			system("amixer set Headphone 127"); //音量调到最大
-			system("killall mplayer");
-			printf("killall mplayer\n");
-			system_to_do_mul_process(audio_play_string);
-			printf("%s\n",audio_play_string);
 			attrname = json_temp->valuestring;
-			attr_value = ALARM_LINKAGE_DEFAULT_V;
-			//检测报警联动条件
-			list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, attr_value);
+			printf("w_description=%s\n",attrname);
+			if(w_mode <sizeof(zigbee_wmode_map)) {
+				if(zigbee_wmode_map[w_mode] != 0xff) { //0xff无效
+					//播放报警声音
+					snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[zigbee_wmode_map[w_mode]]);
+					system("killall mplayer");
+					printf("killall mplayer\n");
+					system_to_do_mul_process(audio_play_string);
+					printf("%s\n",audio_play_string);
+					json_temp = cJSON_GetObjectItem(root, "time");
+					if (!json_temp)
+					{
+						GDGL_DEBUG("json parse error\n");
+						cJSON_Delete(root);
+						return;
+					}
+					warntime = json_temp->valuestring;
+					printf("zigbee warntime=%s\n",warntime);
+					//检测报警联动条件
+					list_linkage_compare_condition_trigger(dev_ieee, dev_ep, attrname, ALARM_LINKAGE_DEFAULT_V, warntime);
+				}
+			}
     	break;
     	case IAS_DEV_CHANGE_MSGTYPE:
 			json_temp = cJSON_GetObjectItem(root, "callbackType");
@@ -657,7 +812,7 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			dev_ieee = json_temp->valuestring;
-			printf("ieee=%s\n",dev_ieee);
+//			printf("ieee=%s\n",dev_ieee);
 			json_temp = cJSON_GetObjectItem(root, "EP");
 			if (!json_temp)
 			{
@@ -666,7 +821,7 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			dev_ep = json_temp->valuestring;
-			printf("ieee=%s\n",dev_ep);
+//			printf("ieee=%s\n",dev_ep);
 			json_temp = cJSON_GetObjectItem(root, "value");
 			if (!json_temp)
 			{
@@ -690,15 +845,15 @@ static void parse_json_callback(const char *text)
 				return;
 			}
 			alarm2 = json_temp2->valueint;
-			printf("alarm1=%d,alarm2=%d\n",alarm1,alarm2);
+//			printf("alarm1=%d,alarm2=%d\n",alarm1,alarm2);
 			//检测联动条件
 			if((alarm1 ==1)||(alarm2 ==1))
 			{
-				list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V);
+				list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V, NULL);
 			}
 			else
 			{
-				list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "normal", ALARM_LINKAGE_DEFAULT_V);
+				list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "normal", ALARM_LINKAGE_DEFAULT_V, NULL);
 			}
     	break;
     	case DEL_DEVICE_MSGTYPE:

@@ -30,6 +30,8 @@
 #include "cJSON.h"
 #include <curl/curl.h>
 #include "httpCurlMethod.h"
+#include "glCalkProtocol.h"
+#include "gatewayHwControl.h"
 
 #define BUILD_RELEASE_VERSION   1
 #define APP_NAME			"ui_daemon"
@@ -61,9 +63,15 @@
 #define JSON_Status         "status"
 #define JSON_Success        1
 
-const char SetAllPermitJoinOn[] = "GET /cgi-bin/rest/network/SetAllPermitJoinOn.cgi?"
-                                "second=60&callback=1234&encodemethod=NONE&sign=AAA HTTP/1.1\r\n"
-                                "Host: 127.0.0.1\r\n\r\n";
+//send callback flag
+#define NOT_NEED_SEND_CALLBACK		0
+#define RESET_USER_INFO_CALLBACK	1
+#define	RESET_FACTORY_CALLBACK		2
+
+//const char SetAllPermitJoinOn[] = "GET /cgi-bin/rest/network/SetAllPermitJoinOn.cgi?"
+//                                "second=60&callback=1234&encodemethod=NONE&sign=AAA HTTP/1.1\r\n"
+//                                "Host: 127.0.0.1\r\n\r\n";
+const char SetAllPermitJoinOn[] = "GET /cgi-bin/rest/network/SetAllPermitJoinOnByIoControl.cgi HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n";
 const char RstAccount[] = "{\"action\":\"accountreset\"}";
 const char RstFactory[] = "{\"action\":\"factoryreset\"}";
 const char stopAlarm[] ="http://127.0.0.1/cgi-bin/rest/network/StopAlarm.cgi";
@@ -76,6 +84,7 @@ double press_tm;
 volatile bool f_block, f_ignore;
 volatile bool is_ignore_when_press;
 volatile int rst_stat = KEY_STAT_RELEASE;
+int send_callback_flag =0;  //1-用户名别名密码恢复callback，2-恢复出厂化设置callback
 
 pthread_t tid, re_tid;
 void* thrd_func(void* arg);
@@ -90,6 +99,8 @@ int main()
     int fd;
     int ret = 0;
     struct input_event e_buf;
+    char resetCallback[200];
+
 //    int repeat_param[2];
 
     CURLcode rc;
@@ -146,7 +157,7 @@ int main()
 
     //==========================================================================
 
-    int socket_fd;
+//    int socket_fd;
 //    int len;		//modify by yanly150611
     struct sockaddr_in remote_addr;
 //    char buf[BUF_SIZE] = {0}; //modify by yanly150611
@@ -199,39 +210,6 @@ int main()
         	printf("stop alarm ok\n");
         }
 
-//        if (key == KEY_SET && key_state == KEY_STAT_RELEASE)
-//        {
-//            printf("call SetAllPermitJoinOn.cgi\n");
-//
-//            if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
-//            {
-//                close(socket_fd);
-//                printf("socket create error\n");
-//                continue;
-//            }
-//
-//            if (connect(socket_fd, (struct sockaddr*)&remote_addr, sizeof(struct sockaddr)) < 0)
-//            {
-//                close(socket_fd);
-//                printf("socket connect error\n");
-//                continue;
-//            }
-//
-//            send(socket_fd, SetAllPermitJoinOn, strlen(SetAllPermitJoinOn), 0);
-//
-//            // 不处理SetAllPermitJoinOn.cgi返回的结果
-//            /*
-//            while ((len = recv(socket_fd, buf, BUF_SIZE, 0)) > 0)
-//            {
-//                recv_data = (char*)realloc(recv_data, sizeof(char)*(recv_data_size + len + 1));
-//                memcpy(recv_data + recv_data_size, buf, len);
-//                recv_data_size += len;
-//                *(recv_data + recv_data_size) = '\0';
-//            }
-//            */
-//
-//            close(socket_fd);
-//        }
         if (key == KEY_RST)
         {
             if (key_state == KEY_STAT_PRESS)
@@ -244,14 +222,14 @@ int main()
 
                 printf("start timing\n");
                 rst_stat = KEY_STAT_PRESS;
-                time(&start_tm);
+                start_tm = time(NULL);
             }
             else if (key_state == KEY_STAT_RELEASE && !is_ignore_when_press)
             {
                 int diff = 0;
                 printf("stop timing\n");
                 rst_stat = KEY_STAT_RELEASE;
-                press_tm = difftime(time(NULL), start_tm); 
+                press_tm = difftime(time(NULL), (time_t)start_tm);
                 printf("press time = %lf\n", press_tm);
                 if (press_tm >= FUNC_1_TIME && press_tm < FUNC_2_TIME)
                 {
@@ -263,9 +241,12 @@ int main()
                     }
 
 #if BUILD_RELEASE_VERSION
-                    printf("reboot\n");
-                    system("reboot");
-                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
+                    if(send_callback_flag == NOT_NEED_SEND_CALLBACK) {
+                    	send_callback_flag = RESET_USER_INFO_CALLBACK;
+                    }
+//                    printf("reboot\n");
+//                    system("reboot");
+//                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
 #else
                     printf("reboot\n");
                     system("echo none > /sys/class/leds/12/trigger");
@@ -279,44 +260,61 @@ int main()
                     {
                         sleep(MIN_FLASH_TIME - diff);
                     }
-
 #if BUILD_RELEASE_VERSION
-                    printf("reboot\n");
-                    system("reboot");
-                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
+                    if(send_callback_flag == RESET_USER_INFO_CALLBACK) {
+                    	send_callback_flag = RESET_FACTORY_CALLBACK;
+                    }
+//                    printf("reboot\n");
+//                    system("reboot");
+//                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
 #else
                     printf("reboot\n");
                     system("echo none > /sys/class/leds/12/trigger");
 #endif
+                }
+                if(send_callback_flag != NOT_NEED_SEND_CALLBACK) {
+                	//send callback
+                	snprintf(resetCallback, sizeof(resetCallback),
+                			"{\n	\"msgtype\":	0,\n	\"mainid\":	1,\n	\"subid\":	3,\n	\"status\": \"%d\"\n}", send_callback_flag);
+                	push_to_CBDaemon(resetCallback, strlen(resetCallback)+1);
+                	send_callback_flag = NOT_NEED_SEND_CALLBACK;
+                    printf("reboot\n");
+                    system("sync");
+                    system("reboot");
+                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
                 }
             }
         }
         //rst键，按一下实现入网功能
 		if (key == KEY_RST && key_state == KEY_STAT_RELEASE)
 		{
-			printf("call SetAllPermitJoinOn.cgi\n");
-
-			if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
-			{
-				close(socket_fd);
-				printf("socket create error\n");
-				continue;
-			}
-
-			if (connect(socket_fd, (struct sockaddr*)&remote_addr, sizeof(struct sockaddr)) < 0)
-			{
-				close(socket_fd);
-				printf("socket connect error\n");
-				continue;
-			}
-			send(socket_fd, SetAllPermitJoinOn, strlen(SetAllPermitJoinOn), 0);
-			close(socket_fd);
+			printf("set SetAllPermitJoinOnByIoControl\n");
+			system(SETIO_L);
+			sleep(1);
+			system(SETIO_H);
+//
+//
+//			if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
+//			{
+//				close(socket_fd);
+//				printf("socket create error\n");
+//				continue;
+//			}
+//
+//			if (connect(socket_fd, (struct sockaddr*)&remote_addr, sizeof(struct sockaddr)) < 0)
+//			{
+//				close(socket_fd);
+//				printf("socket connect error\n");
+//				continue;
+//			}
+//			send(socket_fd, SetAllPermitJoinOn, strlen(SetAllPermitJoinOn), 0);
+//			close(socket_fd);
 		}
     }
     close(fd);
     curl_global_cleanup();
     return 0;
-} 
+}
 
 void* thrd_func(void* arg)
 {
@@ -354,7 +352,7 @@ void* thrd_func(void* arg)
         }
         
         if (rst_stat == KEY_STAT_PRESS
-                && (int)difftime(time(NULL), start_tm) == FUNC_2_TIME
+                && (int)difftime(time(NULL), (time_t)start_tm) == FUNC_2_TIME
                 && !is_ignore_when_press)
         {
             f_block = true;

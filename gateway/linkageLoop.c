@@ -187,7 +187,8 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 			    }
 				GDGL_DEBUG("linkage trigger, lid=%d, ieee=%s, attribute=%s, opt=%s, value=%d\n",member->linkage_member.lid,ieee,attr,member->linkage_member.operator,value);
 				GDGL_DEBUG("actiontype=%d\n", member->linkage_member.actiontype);
-				if(member->linkage_member.actiontype == IPC_CAPTURE_ACT_TYPE)	//如果是截图的操作，重新组合url串
+				if((member->linkage_member.actiontype == IPC_CAPTURE_ACT_TYPE)||
+						(member->linkage_member.actiontype == IPC_RECORD_ACT_TYPE))	//如果是截图或者录像的操作，重新组合url串
 				{
 					execute_ipccapture_url(LINkAGE_TABLE_FLAG, member->linkage_member.lid, time_para);
 				}

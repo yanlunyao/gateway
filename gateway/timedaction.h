@@ -43,4 +43,9 @@ timed_action_t* timed_action_schedule_periodic(timed_action_notifier* notifier, 
  */
 int timed_action_unschedule(timed_action_notifier* notifier, timed_action_t* action);
 
+/**
+ * free an action, timed_action_schedule a action is malloc,so must to free.
+ */
+void timed_action_free(timed_action_t* action);
+
 #endif

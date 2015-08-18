@@ -15,6 +15,8 @@
 #ifndef SMARTGATEWAY_H__
 #define SMARTGATEWAY_H__
 
+//function module  enabled
+#define USE_RF_FUNCTION
 
 #include "list.h"
 #define SMARTGATEWAY_DEBUG
@@ -30,7 +32,8 @@
 #ifdef URL_API_DEBUG
 #define URLAPI_DEBUG(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 #else
-#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/etc/database/api.log","w"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/log/api.log","a+"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+//#define URLAPI_DEBUG(fmt, args...)
 #endif
 
 // UDP PORT
@@ -38,32 +41,40 @@
 #define FEATURE_GDGL_MCAST_PORT 5001
 
 // TCP PORT
-#define FEATURE_GDGL_CPROXY_CA_PUSH_PORT 5013
-#define FEATURE_GDGL_CPROXY_CA_PUSH_PORT_STR "5013"
-#define FEATURE_GDGL_CPROXY_HTTPMODULE_PORT 5014
-#define FEATURE_GDGL_CPROXY_HTTPMODULE_PORT_STR "5014"
-#define FEATURE_GDGL_CPROXY_CA_LISTEN_PORT 5016
-#define FEATURE_GDGL_CPROXY_CA_LISTEN_PORT_STR "5016"
-#define FEATURE_GDGL_CPROXY_CB_PUSH_PORT 5088   //debug yan
-#define FEATURE_GDGL_CPROXY_CB_PUSH_PORT_STR "5088"
-#define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT 5021 //test debug
-#define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT_STR "5021" //test debug
-#define FEATURE_GDGL_CPROXY_CALLBACK_PORT 5019  //test debug
-#define FEATURE_GDGL_CPROXY_CALLBACK_PORT_STR "5019" //test debug
-#define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT	5018
-#define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT_STR	"5018"
-#define FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT 5019  //test debug
-#define FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT_STR "5019" //test debug
+#define FEATURE_GDGL_CPROXY_CA_PUSH_PORT 							5013
+#define FEATURE_GDGL_CPROXY_CA_PUSH_PORT_STR 							"5013"
+#define FEATURE_GDGL_CPROXY_HTTPMODULE_PORT 						5014
+#define FEATURE_GDGL_CPROXY_HTTPMODULE_PORT_STR 						"5014"
+#define FEATURE_GDGL_CPROXY_CA_LISTEN_PORT 							5016
+#define FEATURE_GDGL_CPROXY_CA_LISTEN_PORT_STR 							"5016"
+#define FEATURE_GDGL_CPROXY_CB_PUSH_PORT 							5017   //debug is 5088, actually is 5017
+#define FEATURE_GDGL_CPROXY_CB_PUSH_PORT_STR 							"5017"
+#define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT 							5021 //test debug
+#define FEATURE_GDGL_CPROXY_SIFT_PUSH_PORT_STR 							"5021" //test debug
+#define FEATURE_GDGL_CPROXY_CALLBACK_PORT 							5019  //test debug
+#define FEATURE_GDGL_CPROXY_CALLBACK_PORT_STR 							"5019" //test debug
+#define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT						5018
+#define FEATURE_GDGL_CB_DAEMON_CALLBACK_PORT_STR						"5018"
+#define FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT 						5019  //test debug
+#define FEATURE_GDGL_CPROXY_SIFT_API_PUSH_PORT_STR 						"5019" //test debug
+#define FEATURE_GDGL_API_RF_COM_PORT								5020
+#define FEATURE_GDGL_API_RF_COM_PORT_STR 								"5020"
+#define FEATURE_GDGL_AUTH_LISTEN_PORT								5022
+#define FEATURE_GDGL_AUTH_LISTEN_PORT_STR 								"5022"
 
 //yan test
 #define LOCALHOST_TEST		"127.0.0.1"//"127.0.0.1"//"192.168.1.196"
 
 // Init
 #define FEATURE_GDGL_MAC_LEN 6
-#define FEATURE_GDGL_IFNAME "eth0"
-#define FEATURE_GDGL_MAC_PATH "/gl/etc/mac.conf"
-#define FEATURE_GDGL_ALIAS_PATH "/gl/etc/alias.conf"
-#define FEATURE_GDGL_PASSWD_PATH "/gl/etc/password.conf"
+#define FEATURE_GDGL_IFNAME 					"eth0"
+#define FEATURE_GDGL_MAC_PATH 					"/gl/etc/mac.conf"
+#define FEATURE_GDGL_ALIAS_PATH 				"/gl/etc/alias.conf"
+#define FEATURE_GDGL_PASSWD_PATH 				"/gl/etc/password.conf"
+#define FEATURE_GDGL_SW_VERSION_PATH 			"/gl/etc/sw_version.json"
+#define FEATURE_GDGL_HW_VERSION_PATH 			"/gl/etc/hw_version.json"
+#define FEATURE_GDGL_RF_DEV_PATH 				"/gl/etc/rf_dev.json"
+#define FEATURE_GDGL_AUTH_PATH					"/gl/etc/auth.json"
 
 #define FEATURE_GDGL_TIME_SCENE_LINKAGE_DB		"/gl/etc/database/application.db"
 #define TIME_ACTION_TABLE_NAME		"t_time_action"
@@ -95,6 +106,8 @@
 //siftCallback_daemon
 #define SIFTCALLBACK_MQ_KEY	1235L
 
+//API COMMUNICATION WITH RF_Daemon
+#define RF_RESPOND_TO_API_MAX_LEN		1024
 
 typedef enum {
     clientAdmintMsgPassword = 1,
@@ -143,6 +156,8 @@ struct client_admin_msgbuf {
 #define ALL_BYPASS_ACT_TYPE				2
 #define MAIN_OUTLET_ACT_TYPE			3
 #define IPC_CAPTURE_ACT_TYPE			4
+#define	RF_DEV_BYPASS_ACT_TYPE			5
+#define IPC_RECORD_ACT_TYPE				6
 
 //定时规则参数值
 #define TIME_ACTION_DELAY_MODE		2
@@ -250,6 +265,7 @@ typedef struct
 	char operator[REL_OPERATOR_LEN+1];		//运算符
 	int value;			//值
 	char effect_status;  //该条规则当前生效的状态。生效时置1，1s后状态恢复置0；
+	char actiontype;
 }linkage_loop_st;
 typedef struct
 {

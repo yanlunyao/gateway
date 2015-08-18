@@ -12,7 +12,7 @@
 /*
  * 模块使用方法：
  * 执行命令：BaseDataUpload <参数1> <参数2> ...
- * 参数1：api的num，非必须,发送全部api时，留空。
+ * 参数1：api的num，非必须,发送全部api时，留空。1就是GET_ENDPOINT_NUM
  * 参数2：api需要引入的参数，非必须。
  * */
 
@@ -28,6 +28,7 @@
 #include "smartgateway.h"
 #include "cJSON.h"
 #include "httpCurlMethod.h"
+#include "baseDataUpload.h"
 
 
 #define USE_LIBCURL
@@ -40,24 +41,15 @@
 #define PUSH_SERVER_IP		"127.0.0.1"
 #endif
 
-#define GET_ENDPOINT_NUM					1
-#define GET_ALLROOMINFO_NUM					2
-#define GET_IPCLIST_NUM						3
-#define GET_LOCALIASCIE_NUM					4
-#define GET_CIELIST_NUM						5
-#define GET_ALLBINDLIST_NUM					6
-#define GET_IEEEENDPOINT_NUM				7
-#define GET_SW_VERSION_NUM					8
-#define GET_HW_VERSION_NUM					9
-#define API_AMOUNT							GET_HW_VERSION_NUM
-
-#define RECONNECT_MAX_CNT					20
 
 //////////////////
 int reconnect_cnt =0;  //重连云代理次数，重连超过20次后，延时1小时候再重连。
 
-char api_all_upload_enable[API_AMOUNT] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01}; //基础数据上传所有api返回结果集，1表示需要，0表示不需要
-
+#ifdef USE_RF_FUNCTION
+char api_all_upload_enable[API_AMOUNT] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01, 0X01}; //基础数据上传所有api返回结果集，1表示需要，0表示不需要
+#else
+char api_all_upload_enable[API_AMOUNT] = {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x01, 0X00}; //基础数据上传所有api返回结果集，1表示需要，0表示不需要
+#endif
 #ifdef USE_LIBCURL
 char sift_api[][URL_STRING_LEN] = {
 	"http://127.0.0.1/cgi-bin/rest/network/getendpoint.cgi?callback=1234&encodemethod=NONE&sign=AAA",
@@ -66,9 +58,11 @@ char sift_api[][URL_STRING_LEN] = {
 	"http://127.0.0.1/cgi-bin/rest/network/localIASCIEOperation.cgi?operatortype=5&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA",
 	"http://127.0.0.1/cgi-bin/rest/network/GetLocalCIEList.cgi?callback=1234&encodemethod=NONE&sign=AAA",
 	"http://127.0.0.1/cgi-bin/rest/network/GetAllBindList.cgi?callback=1234&encodemethod=NONE&sign=AAA",
-	"http://127.0.0.1/cgi-bin/rest/network/getIeeeEndPoint.cgi?callback=1234&encodemethod=NONE&sign=AAA&ieee=", //需要读取参数，动态上传的api respond
+//	"http://127.0.0.1/cgi-bin/rest/network/getIeeeEndPoint.cgi?callback=1234&encodemethod=NONE&sign=AAA&ieee=",
+	"http://127.0.0.1/cgi-bin/rest/network/GetEndpointByIeee.cgi?callback=1234&encodemethod=NONE&sign=AAA&ieee=",//需要读取参数，动态上传的api respond
 	"http://127.0.0.1/cgi-bin/rest/network/GetSwVersion.cgi",
 	"http://127.0.0.1/cgi-bin/rest/network/GetHwVersion.cgi",
+	"http://127.0.0.1/cgi-bin/rest/network/GetRFDevList.cgi",
 	"\0"
 };
 #else

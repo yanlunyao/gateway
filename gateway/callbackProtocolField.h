@@ -41,6 +41,7 @@
 #define MAINID4		4
 #define MAINID5		5
 #define MAINID6		6
+#define MAINID7		7
 //
 #define SUBID1		1
 #define SUBID2		2
@@ -49,6 +50,7 @@
 #define SUBID5		5
 #define SUBID6		6
 #define SUBID7		7
+#define SUBID8		8
 
 //
 #define ALARM_LINKAGE_DEFAULT_V		0
@@ -66,6 +68,7 @@
 #define MAINID_TIMEACTION				MAINID3
 #define	MAINID_SCENE					MAINID4
 #define	MAINID_LINKAGE					MAINID5
+#define MAINID_RF						MAINID7
 
 //subid timeaction
 #define SUBID_ADD_TA					SUBID1
@@ -82,6 +85,16 @@
 //subid scene
 #define SUBID_DEL_SCENE					SUBID3
 #define SUBID_EDIT_SCENE				SUBID2
+
+//subid rf, chge:change
+#define SUBID_RF_ALARM					SUBID1
+#define SUBID_RF_OPEN_STATE_CHGE		SUBID2
+#define SUBID_RF_BYPASS_STATE_CHGE		SUBID3
+#define SUBID_RF_NAME_CHGE				SUBID4
+#define SUBID_RF_ACTIVATE_STATE_CHGE	SUBID5
+#define SUBID_RF_POWER_UP				SUBID6
+#define SUBID_RF_LIST_CHGE				SUBID7
+#define SUBID_RF_ONLINE_STATE_CHGE		SUBID8
 
 #endif /* CALLBACKPROTOCOLFIELD_H_ */
 

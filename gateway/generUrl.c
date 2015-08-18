@@ -213,16 +213,43 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			break;
 
 		case IPC_CAPTURE_ACT_TYPE:
-			if(para_cnt != 1)
+			if(para_cnt != 2)
 				return URL_PARA_NUM_ERROR;
 			p1 = (char *)para; //ipc_id
+			p2 = p1+ strlen(p1) +1; //how many ipc picture want to capture
 			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
-					"IPCCapture.cgi?ipc_id=%s", p1);
+					"IPCCapture.cgi?ipc_id=%s&num=%s", p1, p2);
 			memset(actobj, 0, IEEE_LEN+1);
 			break;
+#ifdef USE_RF_FUNCTION
+		case RF_DEV_BYPASS_ACT_TYPE:													//参数3个
+			if(para_cnt != 3)
+				return URL_PARA_NUM_ERROR;
+			p1 = (char *)para;				//ieee string
+			p2 = p1+ strlen(p1) +1;  //ep value			//why +1, becasue add '/0'
+			p3 = p2+ strlen(p2) +1;	//0-bypass 1-unbypass
+
+			if((atoi(p3) == OPT_UNBYPASS)||(atoi(p3) == OPT_BYPASS)) {
+				nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/ChangeRFDevArmState.cgi?"
+						"rfid=%s&state=%s", p1,p3);
+			}
+			else
+				return URL_PARA_NUM_ERROR;
+			snprintf(actobj, IEEE_LEN+1, p1);
+		break;
+#endif
+		case IPC_RECORD_ACT_TYPE:
+			if(para_cnt != 2)
+				return URL_PARA_NUM_ERROR;
+			p1 = (char *)para; //ipc_id
+			p2 = p1+ strlen(p1) +1; //the ipc video record time
+			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
+					"IPCRecord.cgi?ipc_id=%s&duration=%s", p1, p2);
+			memset(actobj, 0, IEEE_LEN+1);
+		break;
 		default:
 			return URL_PARA_TYPE_ERROR;
-			break;
+		break;
 	}
     nwrite = nwrite+1; // 加上结束符'\0'
 //   printf("urlstring:%s\n",url);
