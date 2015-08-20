@@ -225,8 +225,10 @@ static void auth_fd_doit(int sockfd)
 	ssize_t		nread;
 	char		request[MAX_REQUEST];
 	int res;
-//	cJSON* root;
-//	cJSON* json_temp;
+	cJSON* root;
+	char send_cb_string[GL_CALLBACK_MAX_SIZE];
+	int send_cb_len;
+	char *tmp;
 //	auth_st get_socket_auth;
 //	char *time1;
 
@@ -256,7 +258,17 @@ static void auth_fd_doit(int sockfd)
 	    	GDGL_DEBUG("read data invalid\n");
 	    	return;
 	    }
-//	    update_auth_json_file_by_string(request);//用不用写文件？？？？
+	    update_auth_json_file_by_string(request);	//更新文件
+	    root = cJSON_Parse(request);
+		cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
+		cJSON_AddNumberToObject(root, GL_MAINID, GL_MAINID_AUTH);
+		cJSON_AddNumberToObject(root, GL_SUBID, 3);
+	    tmp = cJSON_Print(root);
+	    snprintf(send_cb_string, sizeof(send_cb_string), "%s", tmp);
+	    free(tmp);
+		send_cb_len = strlen(send_cb_string)+1;
+		push_to_CBDaemon(send_cb_string, send_cb_len); //发送授权更新消息
+
 	    judge_auth_state_expire_timer();
 	    //over
 	    return;
