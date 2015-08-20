@@ -1,5 +1,19 @@
+#广播模块，旧的广播模块，初始化模块
+#登录，修改密码，修改别名
+#云代理执行http模块，用户管理模块
+#智能控制功能模块
+#基础数据上传模块
+#情景相关cgi
+#定时相关cgi
+#联动相关cgi
+#按键和灯的功能模块, 通过io控制的方式允许zigbee设备入网
+#获取软件版本，获取硬件版本，执行升级网关的cgi，网关升级程序, 停止所有报警器报警的cgi， 大洋所有报警器操作的cgi
+#获取RF设备信息列表，修改RF设备名称，RF设备布撤防，开始/停止RF警号报警，RF设备启用/禁用配置，RF设备全部布防，全部撤防
+#获取授权列表信息, 网关设置操作的cgi；
+#授权计费功能模块
+#允许所有入网，获取绑定列表，
+#网络状态检测，绑定模块；
 include ../Make.defines
-
 PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		clientLogin.cgi modifyPassword.cgi modifyAlias.cgi \
 		cloudProxyHttpModule clientadmin_daemon \
@@ -8,9 +22,13 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi  \
 		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi \
 		AddLinkage.cgi EditLinkage.cgi DelLinkage.cgi GetLinkageList.cgi EnableLinkage.cgi \
-		ui_daemon \
-		#siftCallback_daemon \
-		net_stat bind_daemon 
+		ui_daemon SetAllPermitJoinOnByIoControl.cgi \
+		GetSwVersion.cgi GetHwVersion.cgi DoUpdate.cgi DoUpdate StopAlarm.cgi AllIasWarningDeviceOperation.cgi \
+		GetRFDevList.cgi ChangeRFDevName.cgi ChangeRFDevArmState.cgi RFWarningDevOperation.cgi ChangeRFDevActivationState.cgi ChangeAllRFDevArmState.cgi \
+		GetAuthState.cgi GatewaySettingOperation.cgi \
+		Auth_Daemon \
+#		SetAllPermitJoinOn.cgi GetAllBindList.cgi \
+#		net_stat bind_daemon
 
 USER_MANAGE_API = clientLogin.cgi modifyPassword.cgi modifyAlias.cgi 		
 TIME_API = AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi
@@ -23,6 +41,7 @@ usermanage:	${USER_MANAGE_API}
 time:	${TIME_API}
 scene:	${SCENE_API}
 linkage:	${LINKAGE_API}
+		cp ${LINKAGE_API} /home/mac/nfs_share/yanlyFolder/Linkage/
 appapi:	${APPLICATION_API}
 
 
@@ -61,15 +80,15 @@ clientadmin_daemon:	clientadmin_daemon.o cJSON.o lockreg.o glCalkProtocol.o
 
 #net_stat
 net_stat: net_stat.o
-		${CC} ${CFLAGS} -o $@ net_stat.o 
+		${CC} -o $@ net_stat.o 
 
 #bind_daemon
 bind_daemon: bind_daemon.o cJSON.o 
-		${CC} ${CFLAGS} -o $@ bind_daemon.o cJSON.o ${LIBS} -lm
+		${CC} -o $@ bind_daemon.o cJSON.o -lpthread -lm
 
 #ui_daemon
-ui_daemon:	ui_daemon.o cJSON.o httpCurlMethod.o
-		${CC} ${CFLAGS} -o $@ ui_daemon.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
+ui_daemon:	ui_daemon.o cJSON.o httpCurlMethod.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ ui_daemon.o cJSON.o httpCurlMethod.o glCalkProtocol.o ${LIBS} -lm -lcurl
 		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/
 		
 #siftCallback_daemon
@@ -79,12 +98,25 @@ ui_daemon:	ui_daemon.o cJSON.o httpCurlMethod.o
 #BaseDateUpload
 BaseDataUpload:	baseDataUpload.o cJSON.o httpCurlMethod.o
 		${CC} ${CFLAGS} -o $@ baseDataUpload.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
-#		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
+		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
 		
 #SmartControl
-SmartControl:	smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o
-		${CC} ${CFLAGS} -o $@ smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o ${LIBS} -lm -lsqlite3
+SmartControl:	smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o httpCurlMethod.o httpGetMsgSmart.o
+		${CC} ${CFLAGS} -o $@ smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o httpCurlMethod.o httpGetMsgSmart.o ${LIBS} -lm -lcurl -lsqlite3
 		cp SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
+#DoUpdate	
+DoUpdate:	doUpdateRoutine.o cJSON.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ doUpdateRoutine.o cJSON.o glCalkProtocol.o ${LIBS} -lm
+		cp DoUpdate /home/mac/nfs_share/yanlyFolder/remoteupdate/
+#Auth_Daemon
+Auth_Daemon:	auth_daemon.o cJSON.o timedaction.o glCalkProtocol.o auth_push2cb.o auth_callback.o
+		${CC} ${CFLAGS} -o $@ auth_daemon.o cJSON.o timedaction.o glCalkProtocol.o auth_push2cb.o auth_callback.o ${LIBS} -lm
+		cp Auth_Daemon /home/mac/nfs_share/yanlyFolder/rf/
+#####################################################################################   //ma gong cgi
+SetAllPermitJoinOn.cgi:	SetAllPermitJoinOn.o cJSON.o
+		${CC} -I../lib -g -D_REENTRANT -Wall -o $@ SetAllPermitJoinOn.o cJSON.o ${LIBS} -lm
+GetAllBindList.cgi:	GetAllBindList.o cJSON.o
+		${CC} -I../lib -g -D_REENTRANT -Wall -o $@ GetAllBindList.o cJSON.o ${LIBS} -lm
 #####################################################################################   //scene cgi
 #AddScene
 AddScene.cgi:	addScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o generUrl.o sqliteWrap.o timingCommon.o
@@ -99,8 +131,8 @@ DelScene.cgi:	delScene.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o sqlite
 GetSceneList.cgi:	getSceneList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o sqliteWrap.o timingCommon.o
 		${CC} ${CFLAGS} -o $@ getSceneList.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o sqliteWrap.o timingCommon.o ${LIBS} -lm -lsqlite3
 #DoScene.cgi
-DoScene.cgi:	doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o glCalkProtocol.o sqliteWrap.o timingCommon.o
-		${CC} ${CFLAGS} -o $@ doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o  glCalkProtocol.o sqliteWrap.o timingCommon.o ${LIBS} -lm -lsqlite3 -lcurl
+DoScene.cgi:	doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o glCalkProtocol.o sqliteWrap.o timingCommon.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS} -o $@ doScene.o cgic.o cJSON.o sqliteOperator.o httpCurlMethod.o  glCalkProtocol.o sqliteWrap.o timingCommon.o apiComWithRFDaemon.o ${LIBS} -lm -lsqlite3 -lcurl
 #ModifySceneIndex.cgi
 ModifySceneIndex.cgi:	modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o sqliteWrap.o timingCommon.o
 		${CC} ${CFLAGS} -o $@ modifySceneIndex.o cgic.o cJSON.o sqliteOperator.o glCalkProtocol.o sqliteWrap.o timingCommon.o ${LIBS} -lm -lsqlite3
@@ -144,9 +176,52 @@ EnableLinkage.cgi:	enableLinkage.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o 
 CallUploadDataProgram.cgi:	callUploadDataProgram.o cgic.o cJSON.o 
 		${CC} ${CFLAGS} -o $@ callUploadDataProgram.o cgic.o cJSON.o ${LIBS} -lm
 #		cp CallUploadDataProgram.cgi /home/mac/nfs_share/yanlyFolder/Upload/
-StopAlarm.cgi:	stopAlarm.o cgic.o cJSON.o httpCurlMethod.o
-		${CC} ${CFLAGS} -o $@ stopAlarm.o cgic.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
+StopAlarm.cgi:	stopAlarm.o cgic.o cJSON.o httpCurlMethod.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS} -o $@ stopAlarm.o cgic.o cJSON.o httpCurlMethod.o apiComWithRFDaemon.o ${LIBS} -lm -lcurl
 		cp StopAlarm.cgi /home/mac/nfs_share/yanlyFolder/Upload/
+		
+GetSwVersion.cgi:	getSwVersion.o cgic.o cJSON.o
+		${CC} ${CFLAGS}	-o $@ getSwVersion.o cgic.o cJSON.o ${LIBS} -lm 
+		cp GetSwVersion.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/		
+GetHwVersion.cgi:	getHwVersion.o cgic.o cJSON.o
+		${CC} ${CFLAGS} -o $@ getHwVersion.o cgic.o cJSON.o ${LIBS} -lm 
+		cp GetHwVersion.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/		
+DoUpdate.cgi:	doUpdate.o cgic.o cJSON.o glCalkProtocol.o
+		${CC} ${CFLAGS} -o $@ doUpdate.o cgic.o cJSON.o glCalkProtocol.o ${LIBS} -lm 
+		cp DoUpdate.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/	
+AllIasWarningDeviceOperation.cgi:	AllIasWarningDeviceOperation.o cgic.o cJSON.o httpCurlMethod.o
+		${CC} ${CFLAGS} -o $@ AllIasWarningDeviceOperation.o cgic.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
+		cp AllIasWarningDeviceOperation.cgi /home/mac/nfs_share/yanlyFolder/Upload/	
+##############################################################################################   //RF relevant
+GetRFDevList.cgi:	getRFDevList.o cgic.o cJSON.o
+		${CC} ${CFLAGS}	-o $@ getRFDevList.o cgic.o cJSON.o ${LIBS} -lm 
+		cp GetRFDevList.cgi /home/mac/nfs_share/yanlyFolder/rf/
+ChangeRFDevName.cgi:	changeRFDevName.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ changeRFDevName.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp ChangeRFDevName.cgi /home/mac/nfs_share/yanlyFolder/rf/
+ChangeRFDevArmState.cgi:	changeRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ changeRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp ChangeRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+RFWarningDevOperation.cgi:	RFWarningDevOperation.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ RFWarningDevOperation.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp RFWarningDevOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/
+ChangeRFDevActivationState.cgi:	changeRFDevActivationState.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ changeRFDevActivationState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp ChangeRFDevActivationState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+ChangeAllRFDevArmState.cgi:	changeAllRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ changeAllRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp ChangeAllRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+##############################################################################################   //business relevant
+GetAuthState.cgi:	getAuthState.o cgic.o cJSON.o
+		${CC} ${CFLAGS}	-o $@ getAuthState.o cgic.o cJSON.o ${LIBS} -lm 
+		cp GetAuthState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+SetAllPermitJoinOnByIoControl.cgi:	setAllPermitJoinOnByIoControl.o cgic.o
+		${CC} ${CFLAGS}	-o $@ setAllPermitJoinOnByIoControl.o cgic.o ${LIBS}
+		cp SetAllPermitJoinOnByIoControl.cgi /home/mac/nfs_share/yanlyFolder/rf/
+GatewaySettingOperation.cgi:	gatewaySettingOperation.o cgic.o cJSON.o glCalkProtocol.o myfile_operation.o httpCurlMethod.o
+		${CC} ${CFLAGS}	-o $@ gatewaySettingOperation.o cgic.o cJSON.o glCalkProtocol.o myfile_operation.o httpCurlMethod.o ${LIBS} -lm -lcurl
+		cp GatewaySettingOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/		
+
 ########################################test################################################
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
@@ -163,14 +238,12 @@ StopAlarm.cgi:	stopAlarm.o cgic.o cJSON.o httpCurlMethod.o
 #		${CC} ${CFLAGS} -o $@ libevent_test.o -levent
 		
 cp_application_api:
-		cp ${APPLICATION_API} /home/mac/nfs_share/yanlyFolder/application/
-cp_user_api:
-		cp ${USER_MANAGE_API} /home/mac/nfs_share/yanlyFolder/usermanage/
+		cp *.cgi /home/mac/nfs_share/yanlyFolder/API/
+cp_daemon:
+		cp Auth_Daemon net_stat bind_daemon ui_daemon factory_reset.sh SmartControl BaseDataUpload DoUpdate cloudProxyHttpModule clientadmin_daemon init_smartgateway bcast_daemon /home/mac/nfs_share/yanlyFolder/all_daemon/
 cp_upload:
 		cp BaseDataUpload SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
 cp_ui:	
 		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/	
 clean:
 		rm -f ${PROGS} ${CLEANFILES} *.o
-		
-		

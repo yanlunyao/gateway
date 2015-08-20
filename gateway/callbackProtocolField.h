@@ -42,6 +42,8 @@
 #define MAINID5		5
 #define MAINID6		6
 #define MAINID7		7
+#define MAINID8		8
+#define MAINID9		9
 //
 #define SUBID1		1
 #define SUBID2		2
@@ -69,6 +71,7 @@
 #define	MAINID_SCENE					MAINID4
 #define	MAINID_LINKAGE					MAINID5
 #define MAINID_RF						MAINID7
+#define MAIND_GATEWAY_SETTING			MAINID9
 
 //subid timeaction
 #define SUBID_ADD_TA					SUBID1
@@ -96,5 +99,7 @@
 #define SUBID_RF_LIST_CHGE				SUBID7
 #define SUBID_RF_ONLINE_STATE_CHGE		SUBID8
 
+//GATEWAYSETTING
+#define SETTING_RESPOND					SUBID1
 #endif /* CALLBACKPROTOCOLFIELD_H_ */
 

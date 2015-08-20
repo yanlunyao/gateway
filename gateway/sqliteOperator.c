@@ -618,7 +618,7 @@ int t_timeaction_get_row_by_id(sqlite3 *my_db, time_action_st *time_act, int id)
 		return (res = ERROR_READ_DB);
     }
 
-    URLAPI_DEBUG("row=%d,col=%d\n",row,col);
+//    URLAPI_DEBUG("row=%d,col=%d\n",row,col);
     //generate scene_base
     if(row ==0){
     	sqlite3_free_table(result);
@@ -1217,23 +1217,38 @@ int add_linkage_db(int *id_value, const linkage_st *linkage_act)
 	if(res<0){
 		return res;
 	}
-	res = t_insert_retid(db, sql, id_value);
+
+	res = t_standard_by_stmt(db, BEAGIN_TRANSCATION); //开启事务
 	if(res<0){
 		return res;
 	}
-
-	if(linkage_act->urlobject.actiontype == IPC_CAPTURE_ACT_TYPE) {
+	res = t_insert_retid(db, sql, id_value);
+	if(res<0){
+		t_standard_by_stmt(db, ROLLBACK);
+		return res;
+	}
+	//截图和录像api参数增加ieee
+	if((linkage_act->urlobject.actiontype == IPC_CAPTURE_ACT_TYPE) ||
+			(linkage_act->urlobject.actiontype == IPC_RECORD_ACT_TYPE)) {
 		char new_url[URL_STRING_LEN+1]={0};
 		const char* updateSQL = "UPDATE t_linkage SET urlstring='%s' WHERE lid=%d";
-		snprintf(new_url, sizeof(new_url), "%s&flag=%d&ruleid=%d",
-				linkage_act->urlobject.urlstring, LNK_IPC_CAPTURE_RULE_FLAG, *id_value);
+//		snprintf(new_url, sizeof(new_url), "%s&flag=%d&ruleid=%d",
+//				linkage_act->urlobject.urlstring, LNK_IPC_CAPTURE_RULE_FLAG, *id_value);
+		//截图api参数修改: 只需要ipc的id和触发的ieee标识
+		snprintf(new_url, sizeof(new_url), "%s&ieee=%s",
+				linkage_act->urlobject.urlstring, linkage_act->lnk_base.trgieee);
 		sprintf(sql, updateSQL, new_url, *id_value);
 
 //		printf("sql:%s\n",sql);
 		res = t_update_delete_and_change_check(db, sql);
 		if(res<0){
+			t_standard_by_stmt(db, ROLLBACK);
 			return res;
 		}
+	}
+	res = t_standard_by_stmt(db, COMMIT_TRANSCATION);
+	if(res<0){
+		return res;
 	}
 	return (res = 0);
 }
@@ -1245,9 +1260,13 @@ int edit_linkage_db(const linkage_st *linkage_act)
 	const char* updateSQL = "UPDATE t_linkage SET lnkname='%s',trgieee='%s',trgep='%s',trgcnd='%s',lnkact='%s',"
 			"enable=%d,attribute='%s',operator='%s',value=%d,actobj='%s',urlstring='%s',actiontype=%d WHERE lid=%d";
 
-	if(linkage_act->urlobject.actiontype == IPC_CAPTURE_ACT_TYPE) {
-		snprintf(new_url, sizeof(new_url), "%s&flag=%d&ruleid=%d",
-				linkage_act->urlobject.urlstring, LNK_IPC_CAPTURE_RULE_FLAG, linkage_act->lnk_base.lid);
+	if((linkage_act->urlobject.actiontype == IPC_CAPTURE_ACT_TYPE) ||
+			(linkage_act->urlobject.actiontype == IPC_RECORD_ACT_TYPE)) {
+//		snprintf(new_url, sizeof(new_url), "%s&flag=%d&ruleid=%d",
+//				linkage_act->urlobject.urlstring, LNK_IPC_CAPTURE_RULE_FLAG, linkage_act->lnk_base.lid);
+		//截图api参数修改: 只需要ipc的id和触发的ieee标识
+		snprintf(new_url, sizeof(new_url), "%s&ieee=%s",
+				linkage_act->urlobject.urlstring, linkage_act->lnk_base.trgieee);
 	}
 	else {
 		snprintf(new_url, sizeof(new_url), "%s", linkage_act->urlobject.urlstring);
@@ -1335,6 +1354,7 @@ int enable_linkage_db(char *sql)
 
 	return (res = 0);
 }
+//读取使能的联动列表参数：lid,trgieee,trgep,attribute,operator,value,actiontype
 int linkage_get_enable_list_db(list_linkage_st *head)
 {
 	int res;
@@ -1345,7 +1365,7 @@ int linkage_get_enable_list_db(list_linkage_st *head)
 
 	list_linkage_st *pos;
 
-	char sql[] = "SELECT lid,trgieee,trgep,attribute,operator,value FROM t_linkage WHERE enable=1";
+	char sql[] = "SELECT lid,trgieee,trgep,attribute,operator,value,actiontype FROM t_linkage WHERE enable=1";
 
     if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
     	GDGL_DEBUG("read db failed:%s\n",errmsg);
@@ -1371,6 +1391,7 @@ int linkage_get_enable_list_db(list_linkage_st *head)
     	snprintf(pos->linkage_member.attribute, ATTRIBUTE_LEN+1, result[index+3]);
     	snprintf(pos->linkage_member.operator, REL_OPERATOR_LEN+1, result[index+4]);
     	pos->linkage_member.value = atoi(result[index+5]);
+    	pos->linkage_member.actiontype = (char)(atoi(result[index+6]));
     	//将节点链接到链表的末尾
     	list_add_tail(&(pos->list), &(head->list));
         index += col;
@@ -1389,7 +1410,7 @@ int get_linkage_list_member_byid(int id, linkage_loop_st *member) //
 	int row, col, index;
 	char sql[SQL_STRING_MAX_LEN];
 
-	const char *querySql = "SELECT lid,trgieee,trgep,attribute,operator,value FROM t_linkage WHERE lid=%d";
+	const char *querySql = "SELECT lid,trgieee,trgep,attribute,operator,value,actiontype FROM t_linkage WHERE lid=%d";
 	sprintf(sql, querySql, id);
 
     if( sqlite3_get_table(db, sql, &result, &row, &col, &errmsg)!= SQLITE_OK){  //need to free result
@@ -1409,6 +1430,7 @@ int get_linkage_list_member_byid(int id, linkage_loop_st *member) //
 		snprintf(member->attribute, ATTRIBUTE_LEN+1, result[index+3]);
 		snprintf(member->operator, REL_OPERATOR_LEN+1, result[index+4]);
 		member->value = atoi(result[index+5]);
+		member->actiontype = (char)atoi(result[index+6]);
         index += col;
 //    }
 	//free

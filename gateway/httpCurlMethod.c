@@ -85,79 +85,79 @@ static size_t write_function( char *ptr, size_t size, size_t nmemb, void *userda
               other:Failed
   Others:  none
 ***************************************************************************/
-static int child_perform_http_request(char * url, char * result)
-{
-
-    CURL *ctx;
-	CURLcode rc;
-//	pid_t c_pid;
-
-//	c_pid = getpid();
-
-	// create a context, sometimes known as a handle.
-	ctx = curl_easy_init();
-	if (NULL == ctx) {
-//		GDGL_DEBUG("child %ld curl_easy_init Error\n", (long)c_pid);
-		return 1;
-	}
-
-	//curl_easy_setopt( ctx , CURLOPT_VERBOSE, 1 );
-
-	// target url:
-	rc = curl_easy_setopt( ctx , CURLOPT_URL,  url );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_URL Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 2;
-	}
-
-	// no progress bar:
-	rc = curl_easy_setopt( ctx , CURLOPT_NOPROGRESS , 1 );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_NOPROGRESS Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 2;
-	}
-
-	// include the header in the body output:
-	rc = curl_easy_setopt( ctx , CURLOPT_HEADER,  1 );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_HEADER Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 2;
-	}
-
-	rc = curl_easy_setopt( ctx , CURLOPT_PROTOCOLS,  CURLPROTO_HTTP );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_PROTOCOLS Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 2;
-	}
-
-    rc = curl_easy_setopt( ctx , CURLOPT_WRITEFUNCTION , write_function );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_WRITEFUNCTION Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 2;
-	}
+//static int child_perform_http_request(char * url, char * result)
+//{
 //
-	rc = curl_easy_setopt( ctx , CURLOPT_WRITEDATA , (void *)result );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_WRITEDATA Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 2;
-	}
-
-	rc = curl_easy_perform( ctx );
-	if (CURLE_OK != rc) {
-//		GDGL_DEBUG("child %ld curl_easy_perform Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
-		curl_easy_cleanup( ctx );
-		return 3;
-	}
-
-	curl_easy_cleanup( ctx );
-	return 0;
-}
+//    CURL *ctx;
+//	CURLcode rc;
+////	pid_t c_pid;
+//
+////	c_pid = getpid();
+//
+//	// create a context, sometimes known as a handle.
+//	ctx = curl_easy_init();
+//	if (NULL == ctx) {
+////		GDGL_DEBUG("child %ld curl_easy_init Error\n", (long)c_pid);
+//		return 1;
+//	}
+//
+//	//curl_easy_setopt( ctx , CURLOPT_VERBOSE, 1 );
+//
+//	// target url:
+//	rc = curl_easy_setopt( ctx , CURLOPT_URL,  url );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_URL Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 2;
+//	}
+//
+//	// no progress bar:
+//	rc = curl_easy_setopt( ctx , CURLOPT_NOPROGRESS , 1 );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_NOPROGRESS Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 2;
+//	}
+//
+//	// include the header in the body output:
+//	rc = curl_easy_setopt( ctx , CURLOPT_HEADER,  1 );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_HEADER Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 2;
+//	}
+//
+//	rc = curl_easy_setopt( ctx , CURLOPT_PROTOCOLS,  CURLPROTO_HTTP );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_PROTOCOLS Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 2;
+//	}
+//
+//    rc = curl_easy_setopt( ctx , CURLOPT_WRITEFUNCTION , write_function );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_WRITEFUNCTION Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 2;
+//	}
+////
+//	rc = curl_easy_setopt( ctx , CURLOPT_WRITEDATA , (void *)result );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_setopt CURLOPT_WRITEDATA Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 2;
+//	}
+//
+//	rc = curl_easy_perform( ctx );
+//	if (CURLE_OK != rc) {
+////		GDGL_DEBUG("child %ld curl_easy_perform Error: %s\n", (long)c_pid, curl_easy_strerror( rc ));
+//		curl_easy_cleanup( ctx );
+//		return 3;
+//	}
+//
+//	curl_easy_cleanup( ctx );
+//	return 0;
+//}
 /*
  * return: 0-success, <0-failed
  * */

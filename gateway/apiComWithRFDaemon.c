@@ -15,7 +15,9 @@
 #include "apiComWithRFDaemon.h"
 
 #define	COM_RF_TIMEOUT					5
-#define DEBUG_IP						"192.168.1.201"
+#define DEBUG_IP						"192.168.1.238"
+#define COMM_WITH_RF_IP					LOCALHOST_TEST
+//#define COMM_WITH_RF_IP					DEBUG_IP
 
 /*
 * Function: communicateWithRF
@@ -39,7 +41,7 @@ int communicateWithRF(const char *send_text, int send_size, char *respond)
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(FEATURE_GDGL_API_RF_COM_PORT);
-	if ( (inet_pton(AF_INET, LOCALHOST_TEST, &servaddr.sin_addr)) <= 0) {
+	if ( (inet_pton(AF_INET, COMM_WITH_RF_IP, &servaddr.sin_addr)) <= 0) {
 		RF_DEBUG("inet_pton error\n");
 		close(fd);
 		return SOCKET_BUILD_FAILED;

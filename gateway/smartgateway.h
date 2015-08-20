@@ -32,8 +32,8 @@
 #ifdef URL_API_DEBUG
 #define URLAPI_DEBUG(fmt, args...)	printf("%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 #else
-#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/log/api.log","a+"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
-//#define URLAPI_DEBUG(fmt, args...)
+//#define URLAPI_DEBUG(fmt, args...)	fprintf( fopen("/gl/log/api.log","a+"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+#define URLAPI_DEBUG(fmt, args...)
 #endif
 
 // UDP PORT
@@ -75,6 +75,10 @@
 #define FEATURE_GDGL_HW_VERSION_PATH 			"/gl/etc/hw_version.json"
 #define FEATURE_GDGL_RF_DEV_PATH 				"/gl/etc/rf_dev.json"
 #define FEATURE_GDGL_AUTH_PATH					"/gl/etc/auth.json"
+#define FEATURE_GDGL_SETTING_PATH				"/gl/etc/gateway_setting.json"
+
+//默认的网关配置信息
+#define DEFAULT_GATEWAY_WARNING_DURATION		240  //网关默认报警时长：240s
 
 #define FEATURE_GDGL_TIME_SCENE_LINKAGE_DB		"/gl/etc/database/application.db"
 #define TIME_ACTION_TABLE_NAME		"t_time_action"

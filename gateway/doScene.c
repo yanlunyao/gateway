@@ -21,6 +21,7 @@
 #include "sqliteOperator.h"
 #include "glCalkProtocol.h"
 #include "httpCurlMethod.h"
+#include "apiComWithRFDaemon.h"
 
 #define ALL_UNBYPASS			-1			//全部布防
 #define ALL_BYPASS				-2
@@ -154,6 +155,9 @@ const char global_bypass[] = "GET /cgi-bin/rest/network/localIASCIEOperation.cgi
 const char global_unbypass[] = "GET /cgi-bin/rest/network/localIASCIEOperation.cgi?"
                         "operatortype=7&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA HTTP/1.1\r\n"
                         "Host: 127.0.0.1\r\n\r\n";
+
+const char rf_bypass[] = "{\n	\"api\": \"ChangeAllRFDevArmState\",\n	\"para1\": \"0\"\n}";
+const char rf_unbypass[]= "{\n	\"api\": \"ChangeAllRFDevArmState\",\n	\"para1\": \"1\"\n}";
 
 static int http_do_scene_by_socket(const char *urlstring)
 {
@@ -384,10 +388,24 @@ static int http_make_all_bypass(int scene_id)
 
     	if (connect(socket_fd, (struct sockaddr*)&remote_addr, sizeof(struct sockaddr)) >= 0){
 
-    		if(scene_id == ALL_BYPASS)
-    			send(socket_fd, global_bypass, strlen(global_bypass), 0);
+    		if(scene_id == ALL_BYPASS) {																	//撤防
+    			send(socket_fd, global_bypass, strlen(global_bypass), 0);//全局撤防
+				#ifdef USE_RF_FUNCTION
+    			communicateWithRF(rf_bypass, strlen(rf_bypass)+1, NULL); //所有rf设备全部撤防
+				#endif
+    			//printf("%s\n", rf_bypass);
+    			//printf("%s\n", global_bypass);
+    		}
     		else
+    		{																								//布防
     			send(socket_fd, global_unbypass, strlen(global_unbypass), 0);
+				#ifdef USE_RF_FUNCTION
+    			communicateWithRF(rf_unbypass, strlen(rf_unbypass)+1, NULL);//所有rf设备全部布防
+				#endif
+    			//printf("%s\n", rf_unbypass);
+    			//printf("%s\n", global_unbypass);
+    		}
+
     	}
     }
 	close(socket_fd);

@@ -14,6 +14,7 @@
 #include "cJSON.h"
 #include "sqliteOperator.h"
 #include "glCalkProtocol.h"
+#include <time.h>
 
 static void api_response(int res, int id_value, int do_status);
 
@@ -27,6 +28,10 @@ int cgiMain()
 	int id_value, do_status;
 
 	cgiHeaderContentType("application/json"); //MIME
+
+	char *ipaddr = getenv("REMOTE_ADDR");
+	URLAPI_DEBUG("remote ip=%s\n",ipaddr);
+
 	cgi_re = cgiFormInteger("tid", &id_value, 0);
 	cgi_re = cgiFormInteger("enable", &do_status, 0);
 
@@ -45,6 +50,7 @@ all_over:
 
 	if((send_cb_len = cJsonEnableTimeAction_callback(send_cb_string, ENABLE_TA_SUBID, res, id_value, do_status)) >=0) {
 		push_to_CBDaemon(send_cb_string, send_cb_len);
+		URLAPI_DEBUG("[time]=%ld,callback from [enableTimeAction]=%s\n", time(NULL), send_cb_string);
 	}
 	return 0;
 }

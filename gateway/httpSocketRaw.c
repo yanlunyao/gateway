@@ -140,8 +140,10 @@ pid_t execute_ipccapture_url(int table_flag, int id_value, char *time_para)
 	if(res ==0) {
 		int newtime=0;
 		struct tm tmp_tm_time;
-		if(time_para ==NULL)
-			newtime = time(NULL);
+		if(time_para ==NULL) {
+			//newtime = time(NULL);
+			GDGL_DEBUG("warningtime=null\n");
+		}
 		else {
 			strptime(time_para, "%Y-%m-%d %H:%M:%S", &tmp_tm_time);
 			newtime = mktime(&tmp_tm_time);

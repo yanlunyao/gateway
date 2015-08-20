@@ -11,10 +11,14 @@
 #include "smartgateway.h"
 
 #define NUM1	1
-#define NUM2	NUM1+1
-#define NUM3	NUM2+1
-#define NUM4	NUM3+1
-#define NUM5	NUM4+1
+#define NUM2	2
+#define NUM3	3
+#define NUM4	4
+#define NUM5	5
+#define NUM6	6
+#define NUM7	7
+#define NUM8	8
+#define NUM9	9
 /*******************************************************/  //cjson fields
 //general
 #define MSGTYPE_STRING			"msgtype"
@@ -31,6 +35,8 @@
 #define GL_MAINID_TA			NUM3
 #define GL_MAINID_SCENE			NUM4
 #define GL_MAINID_LINGE			NUM5
+#define GL_MAINID_AUTH			NUM8
+#define GL_MAINID_GATEWAY		NUM9
 
 
 //subid values

@@ -14,6 +14,7 @@
 #include "cJSON.h"
 #include "sqliteOperator.h"
 #include "glCalkProtocol.h"
+#include <time.h>
 
 
 extern scene_action_stPtr scnaction_st_gener_malloc(const char *text);
@@ -64,6 +65,8 @@ int cgiMain()
 	int res;
 
 	cgiHeaderContentType("application/json"); //MIME
+	char *ipaddr = getenv("REMOTE_ADDR");
+	URLAPI_DEBUG("remote ip=%s\n",ipaddr);
 
 	cgi_re = cgiFormString("scnname", scene_base.scnname, NAME_STRING_LEN + 1);
 	cgi_re = cgiFormString("scnaction", scene_base.scnaction, SCENEACTION_MAX_LEN+1);
@@ -102,6 +105,7 @@ all_over:
 	if((send_cb_len = cJsonScene_callback(send_cb_string, &scene_base, NULL, NULL, 1, res)) >=0) {
 		//if push failed, not handle temporary
 		push_to_CBDaemon(send_cb_string, send_cb_len);
+		URLAPI_DEBUG("[time]=%ld,callback=%s\n", time(NULL), send_cb_string);
 	}
 
     if(scene_action){

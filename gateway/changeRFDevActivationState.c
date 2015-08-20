@@ -32,7 +32,7 @@ int cgiMain()
 	rfid[IEEE_LEN]= '\0';
 
 	//communication with RF_Daemon
-	snprintf(send_string, RF_RESPOND_TO_API_MAX_LEN, "{\n	\"api\": \"ChangeRFDevActivationState\",\n	\"rfid\": \"%s\",\n	\"state\": \"%d\"\n}", rfid,state);
+	snprintf(send_string, RF_RESPOND_TO_API_MAX_LEN, "{\n	\"api\": \"ChangeRFDevActivationState\",\n	\"rfid\": \"%s\",\n	\"state\": %d\n}", rfid,state);
 	RF_DEBUG("%s\n", send_string);
 	res = communicateWithRF(send_string, strlen(send_string)+1, respond_string);
 //	if(res !=0) {

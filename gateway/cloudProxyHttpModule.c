@@ -37,6 +37,8 @@ static int get_json_str(char* json_str, char* raw_str);
 #define CLOUD_PROXY_HTTP_RESPONSE_REQ_HANDLER_INVALID (-5)
 #define CLOUD_PROXY_HTTP_RESPONSE_RES_JSON_PARSE_FAILED (-6)
 
+#define  APP_NAME					"cloudProxyHttpModule"
+#define  APP_VERSION				"V01-01"
 
 /***************************************************************************
   Function: main
@@ -50,6 +52,8 @@ int main(int argc, char **argv)
 {
 	int 		listenfd, i;
 	socklen_t	addrlen;
+
+	printf("===============%s version[%s], COMPILE_TIME[%s: %s]\n", APP_NAME, APP_VERSION, __DATE__, __TIME__);
 
 	listenfd = Tcp_listen(NULL, FEATURE_GDGL_CPROXY_HTTPMODULE_PORT_STR, &addrlen);
 	
@@ -113,6 +117,7 @@ static pid_t child_make(int listenfd, int addrlen)
 static void child_doit(int sockfd)
 {
 	int			rt;
+	int rt2;
 	ssize_t		nread, nwrite;
 	char		request[MAXLINE], url_str[MAX_URL_LEN], response[MAX_RESPONSE] = {0}, result_str[MAX_RESULT] = {0};
 	char		response_json_str[MAX_RESULT] = {0}, *response_json_str_reduce;
@@ -166,7 +171,12 @@ again:
 		}
 		else {
 			GDGL_DEBUG("child %ld result:\n[%s]\n", (long)c_pid, result_str);
-			get_json_str(response_json_str, result_str);
+			rt2 = get_json_str(response_json_str, result_str);
+			if(rt2 <0){
+				GDGL_DEBUG("get_json_str fail!\n");
+				return;
+			}
+			printf("get_json_str ok!\n");
 			response_json = cJSON_Parse(response_json_str);
 			if (!response_json) 
 			{
@@ -179,6 +189,7 @@ again:
 				response_json_str_reduce = cJSON_PrintUnformatted(response_json);
 				nwrite = child_response(CLOUD_PROXY_HTTP_RESPONSE_PERFORM_REQ_SUCCESS, response_json_str_reduce, response);
 				free(response_json_str_reduce);
+				printf("response_json_str cJSON_Parse ok!\n");
 			}
 			cJSON_Delete(response_json); 
 		}
@@ -189,6 +200,8 @@ end:
 	    rt = writen(sockfd, response, nwrite);
 		if (rt != nwrite)
 			GDGL_DEBUG("child %ld write error, %d/%d\n", (long)c_pid, rt, nwrite);
+		else
+			printf("writen response ok!\n");
     }
 	return;
 }
