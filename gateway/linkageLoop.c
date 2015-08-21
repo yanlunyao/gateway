@@ -16,7 +16,7 @@
 #include "httpSocketRaw.h"
 #include "timedaction.h"
 
-#define LINK_EFFECT_TIME		3	//1s
+#define LINK_EFFECT_TIME		3	//3s
 
 list_linkage_st linkage_loop_head;
 //list_linkage_st *linkage_loop;
@@ -25,7 +25,7 @@ list_linkage_st linkage_loop_head;
 extern timed_action_notifier* notifier;
 
 
-void link_effect_status_check(void *arg);
+void link_effect_status_update(void *arg);
 //初始化链表头
 void linkage_head_init()
 {
@@ -65,6 +65,7 @@ void list_linkage_add_member(linkage_loop_st member)
 	pos->linkage_member = member;
 	//将节点链接到链表的末尾
 	list_add_tail(&(pos->list), &(linkage_loop_head.list));
+	printf("[lnk] add id=%d\n", member.lid);
 //	linkage_traverse_printf();
 }
 /*
@@ -82,6 +83,7 @@ char list_linkage_edit_member(linkage_loop_st member)
 		if(member_pos->linkage_member.lid == member.lid) {
 			member_pos->linkage_member = member;
 			res = 1;
+			printf("[lnk] edit id=%d\n", member.lid);
 			break;
 		}
 	}
@@ -104,6 +106,7 @@ char list_linkage_remove_member_byid(int id_value)
 			list_del_init(pos);
 			free(member);
 			res = 1;
+			printf("[lnk] remove id=%d\n", id_value);
 			break;
 		}
 	}
@@ -180,13 +183,14 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 
 				trg_enable =0;
 				member->linkage_member.effect_status =1;
-				ta_link_status_1s = timed_action_schedule(notifier, LINK_EFFECT_TIME, 0, &link_effect_status_check, &(member->linkage_member));
+				//执行定时任务：联动操作触发后，3秒内不能再次触发；
+				ta_link_status_1s = timed_action_schedule(notifier, LINK_EFFECT_TIME, 0, &link_effect_status_update, &(member->linkage_member));
 			    if(ta_link_status_1s ==NULL){
 			    	GDGL_DEBUG("time task init error\n");
 			    	exit(1);
 			    }
-				GDGL_DEBUG("linkage trigger, lid=%d, ieee=%s, attribute=%s, opt=%s, value=%d\n",member->linkage_member.lid,ieee,attr,member->linkage_member.operator,value);
-				GDGL_DEBUG("actiontype=%d\n", member->linkage_member.actiontype);
+				printf("[lnk] trigger, lid=%d, ieee=%s, attribute=%s, opt=%s, value=%d\n",member->linkage_member.lid,ieee,attr,member->linkage_member.operator,value);
+				printf("[lnk] actiontype=%d\n", member->linkage_member.actiontype);
 				if((member->linkage_member.actiontype == IPC_CAPTURE_ACT_TYPE)||
 						(member->linkage_member.actiontype == IPC_RECORD_ACT_TYPE))	//如果是截图或者录像的操作，重新组合url串
 				{
@@ -201,12 +205,15 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 	}
 }
 
-void link_effect_status_check(void *arg)
+/*
+ * 联动列表允许触发的状态更新, effect_status=1表示联动现在不能触发，effect_status=0表示联动现在可以触发。
+ */
+void link_effect_status_update(void *arg)
 {
 	linkage_loop_st *pos = (linkage_loop_st *)arg;
 	if(pos->effect_status ==1) {
 		pos->effect_status =0;
-		GDGL_DEBUG("lid[%d] effect status expired\n", pos->lid);
+		printf("[lnk] lid[%d] effect status expired\n", pos->lid);
 	}
 }
 

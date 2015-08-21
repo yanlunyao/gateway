@@ -98,7 +98,7 @@ pid_t execute_url_action(int table_flag, int id_value)
 //	GDGL_DEBUG("res=%d, sql: %s\n", res, sql);
 	if(res ==0) {
 		snprintf(url, URL_STRING_LEN+1, "GET %s HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", urlstring);
-		GDGL_DEBUG("url is: %s\n", url);
+		printf("[invoke] url=%s\n", url);
 		res = http_get_method_by_socket(url);
 	}
 	exit(0);
@@ -166,9 +166,9 @@ pid_t execute_ipccapture_url(int table_flag, int id_value, char *time_para)
 //			memcpy(newtime+j, time+i, 1);
 //			j++;
 //		}
-		printf("newtime=%d\n",newtime);
+//		printf("newtime=%d\n",newtime);
 		snprintf(url, URL_STRING_LEN+1, "GET %s&time=%d HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", urlstring, newtime);
-		GDGL_DEBUG("url is: %s\n", url);
+		printf("[invoke] url=%s\n", url);
 		res = http_get_method_by_socket(url);
 	}
 	exit(0);

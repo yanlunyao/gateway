@@ -101,5 +101,45 @@
 
 //GATEWAYSETTING
 #define SETTING_RESPOND					SUBID1
+
+
+//w_description
+typedef enum {
+    zgStop =0,
+	zgBurglar,
+	zgFire,
+	zgEmergency,
+	zgMute,
+	zgDeviceTrouble,
+	zgDoorbell,
+	zgOnTime,
+	zgLate,
+	zgNone9,
+	zgNone10,
+	zgNone11,
+	zgNone12,
+	zgLowbattery
+}zigbee_wmode;
+
+
+typedef enum {
+    rfWmodeNone0 =0,
+	rfEmergency,
+	rfGas,
+	rfFire,
+	rfDoorOpen,
+	rfWmodeNone5,
+	rfWmodeNone6,
+	rfWmodeNone7,
+	rfWater,
+	rfPowerOn,
+	rfBurglar,
+	rfHeartbeat,
+	rfLowbattery,
+	rfDoorClose
+}rf_wmode;
+
+
+
 #endif /* CALLBACKPROTOCOLFIELD_H_ */
 

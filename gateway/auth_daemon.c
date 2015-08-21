@@ -253,12 +253,12 @@ static void auth_fd_doit(int sockfd)
 	    request[nread] = 0; // add null
 	    printf("read=%s\n", request);
 
+	    update_auth_json_file_by_string(request);	//更新文件
 	    res = parse_text_2_auth_st(request);
 	    if(res !=0) {
 	    	GDGL_DEBUG("read data invalid\n");
 	    	return;
 	    }
-	    update_auth_json_file_by_string(request);	//更新文件
 	    root = cJSON_Parse(request);
 		cJSON_AddNumberToObject(root, MSGTYPE_STRING, GL_MSGTYPE_VALUE);
 		cJSON_AddNumberToObject(root, GL_MAINID, GL_MAINID_AUTH);

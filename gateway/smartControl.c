@@ -336,6 +336,8 @@ static void parse_json_callback(const char *text)
 	cJSON *root;
 	cJSON *json_temp,*json_temp2;
 	int msgtype, mainid, subid,status, id_value, enable,w_mode;
+	zigbee_wmode zgwmode;
+	rf_wmode rfwmode;
 	char *dev_ieee, *dev_ep, *attrname, *warntime;
 	int attr_value;
 	int alarm1,alarm2;
@@ -354,7 +356,7 @@ static void parse_json_callback(const char *text)
 		GDGL_DEBUG("parse root error\n");
 		return;
 	}
-	printf("recv source size=%d\n",strlen(text));
+	printf("[5018] size=%d\n",strlen(text));
 	char *after1,*after2;
 	after1 = cJSON_Print(root);
 	after2 = cJSON_PrintUnformatted(root);
@@ -674,43 +676,52 @@ static void parse_json_callback(const char *text)
 									}
 									warntime = json_temp->valuestring;
 									printf("rf warntime=%s\n",warntime);
-
+									rfwmode = w_mode;
 									//检测报警联动条件
-									if(w_mode !=14)
+									if(rfwmode != rfDoorClose) {
 										list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V, warntime);
+										if((rfwmode == rfDoorOpen)||(rfwmode == rfBurglar))
+											list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "open", ALARM_LINKAGE_DEFAULT_V, NULL);
+									}
 								}
 							}
 						break;
 						case SUBID_RF_OPEN_STATE_CHGE:
-//							json_temp = cJSON_GetObjectItem(root, "zone_ieee");
-//							if (!json_temp)
-//							{
-//								GDGL_DEBUG("json parse error\n");
-//								cJSON_Delete(root);
-//								return;
-//							}
-//							dev_ieee = json_temp->valuestring;
-//							json_temp = cJSON_GetObjectItem(root, "zone_ep");
-//							if (!json_temp)
-//							{
-//								GDGL_DEBUG("json parse error\n");
-//								cJSON_Delete(root);
-//								return;
-//							}
-//							dev_ep = json_temp->valuestring;
-//							json_temp = cJSON_GetObjectItem(root, "w_description");
-//							if (!json_temp)
-//							{
-//								GDGL_DEBUG("json parse error\n");
-//								cJSON_Delete(root);
-//								return;
-//							}
-//							attrname = json_temp->valuestring;
-//							printf("rf open close state w_description=%s\n",attrname);
-//							if(strcasecmp(attrname, "door close") ==0)
-//								list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "close", ALARM_LINKAGE_DEFAULT_V, NULL);
-//							else
-//								list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "open", ALARM_LINKAGE_DEFAULT_V, NULL);
+							json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							dev_ieee = json_temp->valuestring;
+							json_temp = cJSON_GetObjectItem(root, "zone_ep");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							dev_ep = json_temp->valuestring;
+							json_temp = cJSON_GetObjectItem(root, "w_mode");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							w_mode = atoi(json_temp->valuestring);
+							json_temp = cJSON_GetObjectItem(root, "w_description");
+							if (!json_temp)
+							{
+								GDGL_DEBUG("json parse error\n");
+								cJSON_Delete(root);
+								return;
+							}
+							attrname = json_temp->valuestring;
+							rfwmode = w_mode;
+							if((rfwmode == rfDoorOpen)||(rfwmode == rfBurglar))
+								list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "open", ALARM_LINKAGE_DEFAULT_V, NULL);
 						break;
 						case SUBID_RF_ACTIVATE_STATE_CHGE:
 						break;
@@ -830,7 +841,8 @@ static void parse_json_callback(const char *text)
 					warntime = json_temp->valuestring;
 					printf("zigbee warntime=%s\n",warntime);
 					//检测报警联动条件
-					if((w_mode == 1)||(w_mode == 2)||(w_mode == 3)) //Burglar, Fire, Emergency允许联动
+					zgwmode = w_mode;
+					if((zgwmode == zgBurglar)||(zgwmode == zgFire)||(zgwmode == zgEmergency)) //Burglar, Fire, Emergency允许联动
 						list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V, warntime);
 				}
 			}
@@ -949,7 +961,7 @@ static void parse_json_callback(const char *text)
 	if(need_parse_again_flag ==1)
 	{
 		if(next_size >0){
-			printf("need to parse again\n");
+			printf("[5018] data parse again\n");
 			parse_json_callback(&text[next_size]);
 		}
 		else{
@@ -979,7 +991,7 @@ static void list_time_remove_member_byid_lock(int id_value)
 	int i;
 	for(i=0; i<TID_MAX; i++) {
 		if(list_time[i].tid == id_value) {
-			GDGL_DEBUG("remove id %d from lsit_time\n", list_time[i].tid);
+			printf("[tk] remove id=%d\n", list_time[i].tid);
 			Pthread_mutex_lock(&ta_list_lock);
 			list_time[i].tid = -1;
 			Pthread_mutex_unlock(&ta_list_lock);
@@ -994,7 +1006,7 @@ static void list_time_add_member_lock(time_list_st member)
 			Pthread_mutex_lock(&ta_list_lock);
 			list_time[i] = member;
 			Pthread_mutex_unlock(&ta_list_lock);
-			GDGL_DEBUG("add id %d in list_time\n", list_time[i].tid);
+			printf("[tk] add id=%d\n", list_time[i].tid);
 			return;
 		}
 	}
@@ -1010,7 +1022,7 @@ static char list_time_edit_member_lock(time_list_st member)
 			Pthread_mutex_lock(&ta_list_lock);
 			list_time[i] = member;
 			Pthread_mutex_unlock(&ta_list_lock);
-			GDGL_DEBUG("edit id %d in list_time\n", list_time[i].tid);
+			printf("[tk] edit id=%d\n", list_time[i].tid);
 			return 1;
 		}
 	}
@@ -1071,7 +1083,7 @@ void app5s_task(void *arg)
 void stop_music_callback(void *arg)
 {
 	system("killall mplayer");
-	GDGL_DEBUG("killall mplayer\n");
+	printf("[music] killall mplayer\n");
 
 	if(stop_music_task) {
 		timed_action_unschedule(notifier, stop_music_task);
@@ -1116,11 +1128,11 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		for(i=0; i<DEL_ID_MAX; i++) {
 			if(will_del_id[i] == 0)
 				break;
-			GDGL_DEBUG("will del tid:%d\n",will_del_id[i]);
+			printf("[devBeDeleted] -tid=%d\n",will_del_id[i]);
 			if((send_cb_len = cJsonTimeAction_callback(send_cb_string, SUBID_DEL_TA, 1, will_del_id[i], NULL)) >=0) {
 				push_to_CBDaemon(send_cb_string, send_cb_len);
 				usleep(300000); //300ms //发送太快调试工具接收不到
-				GDGL_DEBUG("send tima success\n");
+				//GDGL_DEBUG("send tima success\n");
 			}
 		}
 	}
@@ -1131,7 +1143,8 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		for(i=0; i<DEL_ID_MAX; i++) {
 			if(will_del_id[i] == 0)
 				break;
-			GDGL_DEBUG("will changed sid:%d\n",will_del_id[i]);
+			//GDGL_DEBUG("will changed sid:%d\n",will_del_id[i]);
+			printf("[devBeDeleted] -sid=%d\n",will_del_id[i]);
 			res = read_t_scene_base_byid(&base_buf, will_del_id[i]);
 			if(res <0) {
 				if(res == ERROR_MDFY_NO_ID_DB) //如果没有这条id规则了，代表这条规则已被删除，发送删除的callback
@@ -1139,7 +1152,7 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 					if((send_cb_len = cJsonDelDoScene_callback(send_cb_string, will_del_id[i], SUBID_DEL_SCENE, 1)) >=0) {
 						push_to_CBDaemon(send_cb_string, send_cb_len);
 						usleep(300000); //300ms //发送太快调试工具接收不到
-						GDGL_DEBUG("send scene success\n");
+						//GDGL_DEBUG("send scene success\n");
 					}
 				}
 				continue;
@@ -1147,7 +1160,7 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 			if((send_cb_len = cJsonScene_callback(send_cb_string, &base_buf, NULL, NULL, SUBID_EDIT_SCENE, 1)) >=0) {
 				push_to_CBDaemon(send_cb_string, send_cb_len);
 				usleep(300000); //300ms //发送太快调试工具接收不到
-				GDGL_DEBUG("send scene success\n");
+				//GDGL_DEBUG("send scene success\n");
 			}
 		}
 	}
@@ -1157,15 +1170,16 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		for(i=0; i<DEL_ID_MAX; i++) {
 			if(will_del_id[i] == 0)
 				break;
-			GDGL_DEBUG("will del lid:%d\n",will_del_id[i]);
+			//GDGL_DEBUG("will del lid:%d\n",will_del_id[i]);
+			printf("[devBeDeleted] -lid=%d\n",will_del_id[i]);
 			if((send_cb_len = cJsonLinkage_callback(send_cb_string, SUBID_DEL_LINK, 1, will_del_id[i], NULL)) >=0) {
 				push_to_CBDaemon(send_cb_string, send_cb_len);
 				usleep(300000); //300ms //发送太快调试工具接收不到
-				GDGL_DEBUG("send linkage success\n");
+				//GDGL_DEBUG("send linkage success\n");
 			}
 		}
 	}
-	GDGL_DEBUG("over\n");
+	//GDGL_DEBUG("over\n");
 	exit(0);
 	return 0;
 }
@@ -1200,7 +1214,7 @@ void gateway_warning_operation(const char *cmdstring)
 	}
 
 	system("killall mplayer");
-	GDGL_DEBUG("killall mplayer\n");
+	printf("[music] killall mplayer\n");
 	if(stop_music_task) {
 		timed_action_unschedule(notifier, stop_music_task);
 		free(stop_music_task);
@@ -1209,7 +1223,7 @@ void gateway_warning_operation(const char *cmdstring)
 			GDGL_DEBUG("free,but stop_music_task really not NULl\n");
 	}
 	system_to_do_mul_process(cmdstring);
-	printf("[play music]=%s\n", cmdstring);
+	printf("[music] %s\n", cmdstring);
 	stop_music_task = timed_action_schedule(notifier, warningduration, 0, &stop_music_callback, NULL);
 }
 
