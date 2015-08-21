@@ -40,3 +40,14 @@ clientadmin_daemon
 /test_db_sql_script
 /sqlite_multi_test.c
 /sqlite_multi_test
+/led-zigbee
+/printfFormatTest.c
+/GetAllBindList.cgi_source
+/ui_daemon
+/net_stat
+/SmartControl
+/DoUpdate
+/BaseDataUpload
+/Auth_Daemon
+/changeLog
+/getGatewaySettingMsg.c

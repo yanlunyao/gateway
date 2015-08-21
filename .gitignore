@@ -41,3 +41,4 @@ unixdomain/
 /.project
 *.cproject
 *.tar.gz
+/debug_yanly/
