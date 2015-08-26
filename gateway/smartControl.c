@@ -977,7 +977,7 @@ static void list_time_remove_member_lock(int member)
 	if(member >= TID_MAX)
 		return;
 	if(list_time[member].tid !=-1) {
-		GDGL_DEBUG("remove id %d from list_time\n", list_time[member].tid);
+		printf("[tk] remove id=%d\n", list_time[member].tid);
 		Pthread_mutex_lock(&ta_list_lock);
 		list_time[member].tid = -1;
 		Pthread_mutex_unlock(&ta_list_lock);
@@ -1144,11 +1144,12 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 			if(will_del_id[i] == 0)
 				break;
 			//GDGL_DEBUG("will changed sid:%d\n",will_del_id[i]);
-			printf("[devBeDeleted] -sid=%d\n",will_del_id[i]);
+			//printf("[devBeDeleted] -sid=%d\n",will_del_id[i]);
 			res = read_t_scene_base_byid(&base_buf, will_del_id[i]);
 			if(res <0) {
 				if(res == ERROR_MDFY_NO_ID_DB) //如果没有这条id规则了，代表这条规则已被删除，发送删除的callback
 				{
+					printf("[devBeDeleted] -sid=%d\n",will_del_id[i]);
 					if((send_cb_len = cJsonDelDoScene_callback(send_cb_string, will_del_id[i], SUBID_DEL_SCENE, 1)) >=0) {
 						push_to_CBDaemon(send_cb_string, send_cb_len);
 						usleep(300000); //300ms //发送太快调试工具接收不到
@@ -1157,6 +1158,7 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 				}
 				continue;
 			}
+			printf("[devBeDeleted] edit sid=%d\n",will_del_id[i]);
 			if((send_cb_len = cJsonScene_callback(send_cb_string, &base_buf, NULL, NULL, SUBID_EDIT_SCENE, 1)) >=0) {
 				push_to_CBDaemon(send_cb_string, send_cb_len);
 				usleep(300000); //300ms //发送太快调试工具接收不到
