@@ -1579,7 +1579,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
     id[row] = 0; id_total = row;
 	sqlite3_free_table(result);
 
-	printf("%d sid rule have this device\n",id_total);
+//	printf("%d sid rule have this device\n",id_total);
 	//删除t_scene_act表里包含此设备的记录
 	sprintf(sql, delSql, del_ieee);
 	res = t_update_delete_and_change_check(db, sql);
@@ -1596,7 +1596,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	    }
 	    if(row ==0){
 	    	//增加判断，如果scnaction为空时，删除此场景规则
-	    	GDGL_DEBUG("the scnaction of this sid[%d] rule is null\n",id[i]);
+//	    	GDGL_DEBUG("the scnaction of this sid[%d] rule is null\n",id[i]);
 	    	sprintf(sql, "DELETE FROM t_scene WHERE sid='%d'", id[i]);
 //	    	sprintf(sql, updateSql, scnaction, id[i]);
 	    	res = t_update_delete_and_change_check(db, sql);
@@ -1619,7 +1619,7 @@ int del_scene_by_isdeletedieee(int *id, const char *del_ieee)
 	    	index += col;
 	    }
 	    //update t_scene
-	    printf("scnaction is %s\n",scnaction);
+//	    printf("scnaction is %s\n",scnaction);
 	    sprintf(sql, updateSql, scnaction, id[i]);
 	    res = t_update_delete_and_change_check(db, sql);
 	    if(res<0){

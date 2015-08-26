@@ -1,7 +1,7 @@
 #广播模块，旧的广播模块，初始化模块
 #登录，修改密码，修改别名
 #云代理执行http模块，用户管理模块
-#智能控制功能模块
+#智能控制功能模块, 根据设备ID删除相应的定时、场景、联动规则的cgi；
 #基础数据上传模块
 #情景相关cgi
 #定时相关cgi
@@ -17,7 +17,7 @@ include ../Make.defines
 PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		clientLogin.cgi modifyPassword.cgi modifyAlias.cgi \
 		cloudProxyHttpModule clientadmin_daemon \
-		SmartControl \
+		SmartControl DeleteSmartRuleByDeviceID.cgi \
 		BaseDataUpload CallUploadDataProgram.cgi \
 		AddScene.cgi DelScene.cgi EditScene.cgi GetSceneList.cgi DoScene.cgi ModifySceneIndex.cgi  \
 		AddTimeAction.cgi EditTimeAction.cgi DelTimeAction.cgi GetTimeActionList.cgi EnableTimeAction.cgi \
@@ -221,7 +221,9 @@ SetAllPermitJoinOnByIoControl.cgi:	setAllPermitJoinOnByIoControl.o cgic.o
 GatewaySettingOperation.cgi:	gatewaySettingOperation.o cgic.o cJSON.o glCalkProtocol.o myfile_operation.o httpCurlMethod.o
 		${CC} ${CFLAGS}	-o $@ gatewaySettingOperation.o cgic.o cJSON.o glCalkProtocol.o myfile_operation.o httpCurlMethod.o ${LIBS} -lm -lcurl
 		cp GatewaySettingOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/		
-
+DeleteSmartRuleByDeviceID.cgi:	deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o
+		${CC} ${CFLAGS} -o $@ deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o ${LIBS} -lm -lsqlite3
+		cp DeleteSmartRuleByDeviceID.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ########################################test################################################
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o
@@ -240,7 +242,7 @@ GatewaySettingOperation.cgi:	gatewaySettingOperation.o cgic.o cJSON.o glCalkProt
 cp_application_api:
 		cp *.cgi /home/mac/nfs_share/yanlyFolder/API/
 cp_daemon:
-		cp Auth_Daemon net_stat bind_daemon ui_daemon factory_reset.sh SmartControl BaseDataUpload DoUpdate cloudProxyHttpModule clientadmin_daemon init_smartgateway bcast_daemon /home/mac/nfs_share/yanlyFolder/all_daemon/
+		cp Auth_Daemon DoUpdate SmartControl BaseDataUpload factory_reset.sh ui_daemon net_stat bind_daemon cloudProxyHttpModule clientadmin_daemon init_smartgateway bcast_daemon /home/mac/nfs_share/yanlyFolder/all_daemon/
 cp_upload:
 		cp BaseDataUpload SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
 cp_ui:	
