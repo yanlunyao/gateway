@@ -46,20 +46,6 @@ static void api_response(int res, int sid)
     fprintf(cgiOut,"%s\n", json_out);
     free(json_out);
 }
-//int http_make(char *urlstring)
-//{
-//	int res;
-//	pid_t	pid;
-//	if ( (pid = fork()) > 0)
-//		return(pid);		/* parent */
-//
-//	res = http_make_start();
-//	if(res <0)
-//		exit(1);
-//	http_sysc_get(urlstring);
-//	http_make_over();
-//	exit(1);
-//}
 int cgiMain()
 {
 	char send_cb_string[GL_CALLBACK_MAX_SIZE];
@@ -75,11 +61,11 @@ int cgiMain()
 
 	cgiHeaderContentType("application/json"); //MIME
 	fflush(stdout);
-//	fflush(stdin);
 
 	//read sid
 	cgi_re = cgiFormInteger("sid", &sid, 0);
 
+	//printf("sid=%d\n",sid);
 	res = db_init();
 	if(res<0){
 		goto all_over;
@@ -97,24 +83,9 @@ int cgiMain()
 	}
 	for (i = 0; i < acturl[0].urltotal; i++){
 		snprintf(url, URL_STRING_LEN+1, "GET %s HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", acturl[i].urlstring);
+		//printf("url=%s\n",url);
 		http_do_scene_by_socket(url);
-//		http_do_scene_by_socket(acturl[i].urlstring);
-		//http_make(acturl[i].urlstring);
 	}
-//	if((res = http_make_start() ) ==0) {
-//
-//		for(i=0; i<acturl[0].urltotal; i++){
-//
-//			res = http_sysc_get(acturl[i].urlstring);
-//			if(res <0)
-//				break;
-//		}
-//
-//		http_make_over();
-//	}
-
-	//http url handle
-
 all_over:
 	db_close();
 	//respond
@@ -156,8 +127,8 @@ const char global_unbypass[] = "GET /cgi-bin/rest/network/localIASCIEOperation.c
                         "operatortype=7&param1=1&param2=2&param3=3&callback=1234&encodemethod=NONE&sign=AAA HTTP/1.1\r\n"
                         "Host: 127.0.0.1\r\n\r\n";
 
-const char rf_bypass[] = "{\n	\"api\": \"ChangeAllRFDevArmState\",\n	\"para1\": \"0\"\n}";
-const char rf_unbypass[]= "{\n	\"api\": \"ChangeAllRFDevArmState\",\n	\"para1\": \"1\"\n}";
+const char rf_bypass[] = "{\n	\"api\": \"ChangeAllRFDevArmState\",\n	\"state\": 0\n}";
+const char rf_unbypass[]= "{\n	\"api\": \"ChangeAllRFDevArmState\",\n	\"state\": 1\n}";
 
 static int http_do_scene_by_socket(const char *urlstring)
 {
