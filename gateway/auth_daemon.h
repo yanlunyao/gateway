@@ -14,13 +14,13 @@
 #define  APP_VERSION				"V01-00"
 
 //default auth.json file
-#define AUTH_STATE_DEFAULT			1
-#define AUTH_AVAILABLE_DEFAULT		1
-#define AUTH_EXPIRETIME_DEFAULT		"2025-01-01 00:00:00"
-#define AUTH_BEFORE_REMIND_DEFAULT	3
-#define AUTH_AFTER_REMIND_DEFAULT	3
+#define AUTH_STATE_DEFAULT			-1
+#define AUTH_AVAILABLE_DEFAULT		0
+#define AUTH_EXPIRETIME_DEFAULT		""
+#define AUTH_BEFORE_REMIND_DEFAULT	-1
+#define AUTH_AFTER_REMIND_DEFAULT	-1
 
-#define REMIND_PERIOD_TIME			2*5   //2 hour unit[s]
+#define REMIND_PERIOD_TIME			2*3600   //2 hour unit[s]
 #define AUTH_READ_TIMEOUT			10	//10s unit[s]
 
 #define	MAX_REQUEST 				2048
