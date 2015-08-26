@@ -34,8 +34,8 @@ static void api_response(int res)
 
 //const char getzbnode[]= "http://127.0.0.1/cgi-bin/rest/network/getZBNode.cgi?callback=1234&encodemethod=NONE&sign=AAA";
 const char stopZigbeeWarning[]= "http://127.0.0.1/cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=0&param2=0&param3=0&operatortype=0";
-const char stopAllRFWarning[] = "{\n	\"api\": \"RFWarningDevOperation\",\n	\"para1\": \"0\",\n	\"para2\": \"2\"\n	\"para3\": \"0\"\n}";
-
+const char stopAllRFWarning[] = "{\n	\"api\": \"RFWarningDevOperation\",\n	\"rfid\": \"\",\n	\"operatortype\": 2,\n	\"param1\": 0\n}";
+//{\n	\"api\": \"RFWarningDevOperation\",\n	\"rfid\": \"%s\",\n	\"operatortype\": %d,\n	\"param1\": %d\n}
 int cgiMain()
 {
 	int res=0;
