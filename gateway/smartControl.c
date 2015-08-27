@@ -27,6 +27,7 @@
 #include "baseDataUpload.h"
 #include "httpGetMsgSmart.h"
 #include <curl/curl.h>
+#include "zigbeeDeviceInfo.h"
 
 #define  PROJECT_VERSION			"SmartControl-V02-00"
 #define  APP_NAME					"SmartControl"
@@ -659,13 +660,8 @@ static void parse_json_callback(const char *text)
 							if(w_mode <sizeof(rf_wmode_map)) {
 								if(rf_wmode_map[w_mode] != 0xff) { //0xff无效
 									//播放报警声音
-//									snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", attrname);
 									snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[rf_wmode_map[w_mode]]);
 									gateway_warning_operation(audio_play_string);
-//									system("killall mplayer");
-//									printf("killall mplayer\n");
-//									system_to_do_mul_process(audio_play_string);
-//									printf("%s\n",audio_play_string);
 
 									json_temp = cJSON_GetObjectItem(root, "time");
 									if (!json_temp)
@@ -679,6 +675,7 @@ static void parse_json_callback(const char *text)
 									rfwmode = w_mode;
 									//检测报警联动条件
 									if(rfwmode != rfDoorClose) {
+										//printf("haah,dev_ieee=%s,dev_ep=%s\n", dev_ieee,dev_ep);
 										list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V, warntime);
 										if((rfwmode == rfDoorOpen)||(rfwmode == rfBurglar))
 											list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "open", ALARM_LINKAGE_DEFAULT_V, NULL);
@@ -719,7 +716,21 @@ static void parse_json_callback(const char *text)
 								return;
 							}
 							attrname = json_temp->valuestring;
+
 							rfwmode = w_mode;
+							//所有大洋报警器播放门铃声
+							if(rfwmode == rfDoorOpen) {
+								char doorbellapi[300] = {0};
+								snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
+										"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", warningduration);
+//								printf("%s\n", doorbellapi);
+								http_get_method_by_socket(doorbellapi);
+								//播放网关声音
+								snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[8]);
+								gateway_warning_operation(audio_play_string);
+							}
+
+							//检测联动
 							if((rfwmode == rfDoorOpen)||(rfwmode == rfBurglar))
 								list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "open", ALARM_LINKAGE_DEFAULT_V, NULL);
 						break;
@@ -828,7 +839,16 @@ static void parse_json_callback(const char *text)
 			printf("w_description=%s\n",attrname);
 			if(w_mode <sizeof(zigbee_wmode_map)) {
 				if(zigbee_wmode_map[w_mode] != 0xff) { //0xff无效
-					//播放报警声音
+
+					zgwmode = w_mode;
+					//所有大洋报警器播放门铃声
+					if(zgwmode == zgDoorbell) {
+						char doorbellapi[300] = {0};
+						snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
+								"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", warningduration);
+						http_get_method_by_socket(doorbellapi);
+					}
+					//播放网关声音
 					snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[zigbee_wmode_map[w_mode]]);
 					gateway_warning_operation(audio_play_string);
 					json_temp = cJSON_GetObjectItem(root, "time");
@@ -838,12 +858,57 @@ static void parse_json_callback(const char *text)
 						cJSON_Delete(root);
 						return;
 					}
+					//所有RF报警器报警
+					if((zgwmode == zgBurglar)||(zgwmode == zgFire)||(zgwmode == zgEmergency)) { //Burglar, Fire, Emergency允许播放
+						char rfwarningapi[300] = {0};
+						snprintf(rfwarningapi, sizeof(rfwarningapi), "GET /cgi-bin/rest/network/RFWarningDevOperation.cgi?rfid=0&operatortype=4&param1=0 "
+								"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
+						http_get_method_by_socket(rfwarningapi);
+					}
 					warntime = json_temp->valuestring;
 					printf("zigbee warntime=%s\n",warntime);
 					//检测报警联动条件
-					zgwmode = w_mode;
 					if((zgwmode == zgBurglar)||(zgwmode == zgFire)||(zgwmode == zgEmergency)) //Burglar, Fire, Emergency允许联动
 						list_linkage_compare_condition_trigger(dev_ieee, dev_ep, "alarm", ALARM_LINKAGE_DEFAULT_V, warntime);
+				}
+			}
+    	break;
+    	case DEV_BYPASS_CHANGE_MSGTYPE:
+			json_temp = cJSON_GetObjectItem(root, "zone_ieee");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			dev_ieee = json_temp->valuestring;
+			//printf("ieee=%s\n", dev_ieee);
+			json_temp = cJSON_GetObjectItem(root, "w_mode");
+			if (!json_temp)
+			{
+				GDGL_DEBUG("json parse error\n");
+				cJSON_Delete(root);
+				return;
+			}
+			w_mode = atoi(json_temp->valuestring);
+			zgwmode = w_mode;
+			//printf("zgwmode=%d\n", zgwmode);
+			if(zgwmode == zgBypass) {
+				//检测设备是否是门磁
+				char dev_mode_id[10]={0};
+				if(http_get_dev_modeid(dev_mode_id, dev_ieee) ==0) {
+					printf("dev_mode_id=%s\n", dev_mode_id);
+					if(memcmp(dev_mode_id, DOOR_MODEID, 5) ==0) {
+						//是门磁，所有大洋报警器播放门铃声
+						char doorbellapi[300] = {0};
+						snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
+									"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", warningduration);
+						//printf("%s\n", doorbellapi);
+						http_get_method_by_socket(doorbellapi);
+						//播放网关声音
+						snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[8]);
+						gateway_warning_operation(audio_play_string);
+					}
 				}
 			}
     	break;
