@@ -151,7 +151,11 @@ void list_linkage_compare_condition_trigger(char *ieee, char *ep, char *attr, in
 		if(member->linkage_member.effect_status ==1) {
 			continue;
 		}
-		if(		(memcmp(ieee, member->linkage_member.trgieee, IEEE_LEN)==0)&&
+//		if(		(memcmp(ieee, member->linkage_member.trgieee, IEEE_LEN)==0)&&
+//				(memcmp(ep, member->linkage_member.trgep, 2)==0)&&
+//				(memcmp(attr, member->linkage_member.attribute, strlen(attr))==0)
+//		)
+		if(		(memcmp(ieee, member->linkage_member.trgieee, strlen(ieee))==0)&&
 				(memcmp(ep, member->linkage_member.trgep, 2)==0)&&
 				(memcmp(attr, member->linkage_member.attribute, strlen(attr))==0)
 		)
