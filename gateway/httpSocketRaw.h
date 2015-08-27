@@ -12,4 +12,5 @@
 
 pid_t execute_url_action(int table_flag, int id_value);
 pid_t execute_ipccapture_url(int table_flag, int id_value, char *time);
+int http_get_method_by_socket(const char *urlstring);
 #endif /* HTTPSOCKETRAW_H_ */

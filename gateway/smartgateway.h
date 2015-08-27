@@ -36,6 +36,9 @@
 #define URLAPI_DEBUG(fmt, args...)
 #endif
 
+#define IPC_LINKAGE_DEBUG(fmt, args...)	fprintf( fopen("/gl/log/ipclinkage.log","a+"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
+
+
 // UDP PORT
 #define FEATURE_GDGL_BCAST_PORT 5002
 #define FEATURE_GDGL_MCAST_PORT 5001

@@ -26,7 +26,7 @@
 #include "sqliteOperator.h"
 
 //通过原生socket发送http-get协议
-static int http_get_method_by_socket(const char *urlstring)
+int http_get_method_by_socket(const char *urlstring)
 {
     struct sockaddr_in remote_addr;
     int socket_fd;
@@ -104,7 +104,7 @@ pid_t execute_url_action(int table_flag, int id_value)
 	exit(0);
 	return 0;
 }
-//多进程执行截图
+//多进程执行截图或录像
 pid_t execute_ipccapture_url(int table_flag, int id_value, char *time_para)
 {
 	char sql[SQL_STRING_MAX_LEN];
@@ -169,6 +169,7 @@ pid_t execute_ipccapture_url(int table_flag, int id_value, char *time_para)
 //		printf("newtime=%d\n",newtime);
 		snprintf(url, URL_STRING_LEN+1, "GET %s&time=%d HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", urlstring, newtime);
 		printf("[invoke] url=%s\n", url);
+		IPC_LINKAGE_DEBUG("%s\n",url);
 		res = http_get_method_by_socket(url);
 	}
 	exit(0);

@@ -64,6 +64,7 @@
 #define IAS_DEV_CHANGE_MSGTYPE			7  //安防设备状态变化
 #define DEV_ENROLL_MSGTYPE				16
 #define DEV_UNENROLL_MSGTYPE			17
+#define DEV_BYPASS_CHANGE_MSGTYPE		21
 #define NEW_ADDED_DEVICE_MSGTYPE		29
 #define DEL_DEVICE_MSGTYPE				34
 //
@@ -115,7 +116,8 @@ typedef enum {
 	zgOnTime,
 	zgLate,
 	zgNone9,
-	zgNone10,
+//	zgNone10,
+	zgBypass,
 	zgNone11,
 	zgNone12,
 	zgLowbattery
