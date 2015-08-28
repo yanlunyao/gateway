@@ -858,6 +858,7 @@ static void parse_json_callback(const char *text)
 						cJSON_Delete(root);
 						return;
 					}
+#ifdef USE_RF_FUNCTION
 					//所有RF报警器报警
 					if((zgwmode == zgBurglar)||(zgwmode == zgFire)||(zgwmode == zgEmergency)) { //Burglar, Fire, Emergency允许播放
 						char rfwarningapi[300] = {0};
@@ -865,6 +866,7 @@ static void parse_json_callback(const char *text)
 								"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
 						http_get_method_by_socket(rfwarningapi);
 					}
+#endif
 					warntime = json_temp->valuestring;
 					printf("zigbee warntime=%s\n",warntime);
 					//检测报警联动条件
