@@ -241,9 +241,9 @@ int main()
                     }
 
 #if BUILD_RELEASE_VERSION
-                    if(send_callback_flag == NOT_NEED_SEND_CALLBACK) {
+//                    if(send_callback_flag == NOT_NEED_SEND_CALLBACK) {
                     	send_callback_flag = RESET_USER_INFO_CALLBACK;
-                    }
+//                    }
 //                    printf("reboot\n");
 //                    system("reboot");
 //                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
@@ -261,9 +261,9 @@ int main()
                         sleep(MIN_FLASH_TIME - diff);
                     }
 #if BUILD_RELEASE_VERSION
-                    if(send_callback_flag == RESET_USER_INFO_CALLBACK) {
+//                    if(send_callback_flag != NOT_NEED_SEND_CALLBACK) {
                     	send_callback_flag = RESET_FACTORY_CALLBACK;
-                    }
+//                    }
 //                    printf("reboot\n");
 //                    system("reboot");
 //                    sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
@@ -275,11 +275,13 @@ int main()
                 if(send_callback_flag != NOT_NEED_SEND_CALLBACK) {
                 	//send callback
                 	snprintf(resetCallback, sizeof(resetCallback),
-                			"{\n	\"msgtype\":	0,\n	\"mainid\":	1,\n	\"subid\":	3,\n	\"status\": \"%d\"\n}", send_callback_flag);
+                			"{\n	\"msgtype\":	0,\n	\"mainid\":	1,\n	\"subid\":	3,\n	\"status\": %d\n}", send_callback_flag);
                 	push_to_CBDaemon(resetCallback, strlen(resetCallback)+1);
+                	printf("%s\n", resetCallback);
                 	send_callback_flag = NOT_NEED_SEND_CALLBACK;
                     printf("reboot\n");
                     system("sync");
+                    sleep(1);
                     system("reboot");
                     sleep(3); //加个延时，为了在reboot前不继续运行到接下来的程序
                 }
