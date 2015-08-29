@@ -238,14 +238,22 @@ DeleteSmartRuleByDeviceID.cgi:	deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalk
 #libevent_test
 #libevent_test: libevent_test.o
 #		${CC} ${CFLAGS} -o $@ libevent_test.o -levent
-		
+ALL_DAEMON = Auth_Daemon DoUpdate SmartControl BaseDataUpload factory_reset.sh ui_daemon net_stat bind_daemon cloudProxyHttpModule clientadmin_daemon init_smartgateway bcast_daemon
+DATE =`date '+%Y%m%d'`
+#echo "${DATE]"
 cp_application_api:
 		cp *.cgi /home/mac/nfs_share/yanlyFolder/API/
-cp_daemon:
-		cp Auth_Daemon DoUpdate SmartControl BaseDataUpload factory_reset.sh ui_daemon net_stat bind_daemon cloudProxyHttpModule clientadmin_daemon init_smartgateway bcast_daemon /home/mac/nfs_share/yanlyFolder/all_daemon/
+		tar -czvf API_yanly${DATE}.tar.gz *.cgi
+		cp API_yanly${DATE}.tar.gz /media/sf_Share/bin/
+		cp *.cgi ../gateway/bin/
+		cp API_yanly${DATE}.tar.gz ../gateway/bin/
+cp_all_daemon:
+		cp ${ALL_DAEMON} /home/mac/nfs_share/yanlyFolder/all_daemon/
+		tar -czvf Daemon_yanly${DATE}.tar.gz ${ALL_DAEMON}
+		cp Daemon_yanly${DATE}.tar.gz /media/sf_Share/bin/
+		cp ${ALL_DAEMON} ../gateway/bin/
+		cp Daemon_yanly${DATE}.tar.gz ../gateway/bin/
 cp_upload:
 		cp BaseDataUpload SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
-cp_ui:	
-		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/	
 clean:
 		rm -f ${PROGS} ${CLEANFILES} *.o
