@@ -240,6 +240,7 @@ DeleteSmartRuleByDeviceID.cgi:	deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalk
 #		${CC} ${CFLAGS} -o $@ libevent_test.o -levent
 ALL_DAEMON = Auth_Daemon DoUpdate SmartControl BaseDataUpload factory_reset.sh ui_daemon net_stat bind_daemon cloudProxyHttpModule clientadmin_daemon init_smartgateway bcast_daemon
 DATE =`date '+%Y%m%d'`
+
 #echo "${DATE]"
 cp_application_api:
 		cp *.cgi /home/mac/nfs_share/yanlyFolder/API/
