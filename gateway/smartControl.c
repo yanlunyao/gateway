@@ -36,6 +36,7 @@
 #define  CB_HEART_BEAT_TIME			30   //30s
 #define  TIMEOUT_UNIT				5	 //(5s/unit)
 #define  INVALID_TIMEOUT			2 	 //10s=2*5
+#define  MUSIC_SHORT_DURATION		3	//3s 门铃和device_trouble响的时长
 
 time_list_st list_time[TID_MAX]; //维护的时间全局列表
 time_list_st time_member_null = {0};
@@ -93,7 +94,7 @@ int system_to_do_mul_process(const char *string);
 
 //网关报警声音操作相关
 void setting_warningduration(int value);
-void gateway_warning_operation(const char *cmdstring);
+void gateway_warning_operation(const char *cmdstring, int music_duration);
 
 int main()
 {
@@ -658,10 +659,15 @@ static void parse_json_callback(const char *text)
 							printf("rf w_description=%s\n",attrname);
 
 							if(w_mode <sizeof(rf_wmode_map)) {
+								rfwmode = w_mode;
 								if(rf_wmode_map[w_mode] != 0xff) { //0xff无效
 									//播放报警声音
 									snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[rf_wmode_map[w_mode]]);
-									gateway_warning_operation(audio_play_string);
+
+									if(rfwmode == rfDoorClose)
+										gateway_warning_operation(audio_play_string, MUSIC_SHORT_DURATION);
+									else
+										gateway_warning_operation(audio_play_string, warningduration);
 
 									json_temp = cJSON_GetObjectItem(root, "time");
 									if (!json_temp)
@@ -672,7 +678,7 @@ static void parse_json_callback(const char *text)
 									}
 									warntime = json_temp->valuestring;
 									printf("rf warntime=%s\n",warntime);
-									rfwmode = w_mode;
+									//rfwmode = w_mode;
 									//检测报警联动条件
 									if(rfwmode != rfDoorClose) {
 										//printf("haah,dev_ieee=%s,dev_ep=%s\n", dev_ieee,dev_ep);
@@ -722,12 +728,12 @@ static void parse_json_callback(const char *text)
 							if(rfwmode == rfDoorOpen) {
 								char doorbellapi[300] = {0};
 								snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
-										"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", warningduration);
+										"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", MUSIC_SHORT_DURATION);
 //								printf("%s\n", doorbellapi);
 								http_get_method_by_socket(doorbellapi);
 								//播放网关声音
 								snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[8]);
-								gateway_warning_operation(audio_play_string);
+								gateway_warning_operation(audio_play_string, MUSIC_SHORT_DURATION);
 							}
 
 							//检测联动
@@ -845,12 +851,15 @@ static void parse_json_callback(const char *text)
 					if(zgwmode == zgDoorbell) {
 						char doorbellapi[300] = {0};
 						snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
-								"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", warningduration);
+								"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", MUSIC_SHORT_DURATION);
 						http_get_method_by_socket(doorbellapi);
 					}
 					//播放网关声音
 					snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[zigbee_wmode_map[w_mode]]);
-					gateway_warning_operation(audio_play_string);
+					if(zgwmode == zgDoorbell)
+						gateway_warning_operation(audio_play_string, MUSIC_SHORT_DURATION);
+					else
+						gateway_warning_operation(audio_play_string, warningduration);
 					json_temp = cJSON_GetObjectItem(root, "time");
 					if (!json_temp)
 					{
@@ -904,12 +913,12 @@ static void parse_json_callback(const char *text)
 						//是门磁，所有大洋报警器播放门铃声
 						char doorbellapi[300] = {0};
 						snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
-									"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", warningduration);
+									"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", MUSIC_SHORT_DURATION);
 						//printf("%s\n", doorbellapi);
 						http_get_method_by_socket(doorbellapi);
 						//播放网关声音
 						snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[8]);
-						gateway_warning_operation(audio_play_string);
+						gateway_warning_operation(audio_play_string, MUSIC_SHORT_DURATION);
 					}
 				}
 			}
@@ -1276,9 +1285,9 @@ void setting_warningduration(int value)
 	warningduration =value;
 	printf("warningduration=%d\n", warningduration);
 }
-void gateway_warning_operation(const char *cmdstring)
+void gateway_warning_operation(const char *cmdstring, int music_duration)
 {
-	if(warningduration <=0) {
+	if(music_duration <=0) {
 		return;
 	}
 
@@ -1293,7 +1302,7 @@ void gateway_warning_operation(const char *cmdstring)
 	}
 	system_to_do_mul_process(cmdstring);
 	printf("[music] %s\n", cmdstring);
-	stop_music_task = timed_action_schedule(notifier, warningduration, 0, &stop_music_callback, NULL);
+	stop_music_task = timed_action_schedule(notifier, music_duration, 0, &stop_music_callback, NULL);
 }
 
 
