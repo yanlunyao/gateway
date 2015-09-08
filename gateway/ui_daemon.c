@@ -146,12 +146,14 @@ int main()
     if (pthread_create(&re_tid, NULL, retry_func, NULL) != 0) 
     {
         printf("Create thread error!\n");
+        close(fd);
         return -1;
     }
 
     if (pthread_create(&tid, NULL, thrd_func, NULL) != 0) 
     {
         printf("Create thread error!\n");
+        close(fd);
         return -1;
     }
 

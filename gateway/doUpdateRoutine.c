@@ -243,6 +243,7 @@ int get_cur_sw_version_from_package(char *name)
 	version = strsep(&ss, "-");
 	memcpy(name, version, strlen(version));
 	printf("package version[%s]\n",name);
+	pclose(stream);
 	return 0;
 }
 

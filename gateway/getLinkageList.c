@@ -21,7 +21,7 @@ static void api_response(int res, int total, const linkage_base_st *link_base);
 int cgiMain()
 {
 	linkage_base_st *base_all_list;
-	int total_num;
+	int total_num =0;
 	int res=0;
 
 	cgiHeaderContentType("application/json"); //MIME

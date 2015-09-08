@@ -89,7 +89,7 @@ bind_daemon: bind_daemon.o cJSON.o
 #ui_daemon
 ui_daemon:	ui_daemon.o cJSON.o httpCurlMethod.o glCalkProtocol.o
 		${CC} ${CFLAGS} -o $@ ui_daemon.o cJSON.o httpCurlMethod.o glCalkProtocol.o ${LIBS} -lm -lcurl
-		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/
+#		cp ui_daemon /home/mac/nfs_share/yanlyFolder/Ui_daemon/
 		
 #siftCallback_daemon
 #siftCallback_daemon:	siftCallback_daemon.o cJSON.o timedaction.o
@@ -98,20 +98,20 @@ ui_daemon:	ui_daemon.o cJSON.o httpCurlMethod.o glCalkProtocol.o
 #BaseDateUpload
 BaseDataUpload:	baseDataUpload.o cJSON.o httpCurlMethod.o
 		${CC} ${CFLAGS} -o $@ baseDataUpload.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
-		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
+#		cp BaseDataUpload /home/mac/nfs_share/yanlyFolder/Upload/
 		
 #SmartControl
 SmartControl:	smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o httpCurlMethod.o httpGetMsgSmart.o
 		${CC} ${CFLAGS} -o $@ smartControl.o cJSON.o sqliteWrap.o sqliteOperator.o timingCommon.o httpSocketRaw.o glCalkProtocol.o timedaction.o linkageLoop.o invokeBaseDataUpldPrm.o httpCurlMethod.o httpGetMsgSmart.o ${LIBS} -lm -lcurl -lsqlite3
-		cp SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
+#		cp SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
 #DoUpdate	
 DoUpdate:	doUpdateRoutine.o cJSON.o glCalkProtocol.o
 		${CC} ${CFLAGS} -o $@ doUpdateRoutine.o cJSON.o glCalkProtocol.o ${LIBS} -lm
-		cp DoUpdate /home/mac/nfs_share/yanlyFolder/remoteupdate/
+#		cp DoUpdate /home/mac/nfs_share/yanlyFolder/remoteupdate/
 #Auth_Daemon
 Auth_Daemon:	auth_daemon.o cJSON.o timedaction.o glCalkProtocol.o auth_push2cb.o auth_callback.o
 		${CC} ${CFLAGS} -o $@ auth_daemon.o cJSON.o timedaction.o glCalkProtocol.o auth_push2cb.o auth_callback.o ${LIBS} -lm
-		cp Auth_Daemon /home/mac/nfs_share/yanlyFolder/rf/
+#		cp Auth_Daemon /home/mac/nfs_share/yanlyFolder/rf/
 #####################################################################################   //ma gong cgi
 SetAllPermitJoinOn.cgi:	SetAllPermitJoinOn.o cJSON.o
 		${CC} -I../lib -g -D_REENTRANT -Wall -o $@ SetAllPermitJoinOn.o cJSON.o ${LIBS} -lm
@@ -178,52 +178,52 @@ CallUploadDataProgram.cgi:	callUploadDataProgram.o cgic.o cJSON.o
 #		cp CallUploadDataProgram.cgi /home/mac/nfs_share/yanlyFolder/Upload/
 StopAlarm.cgi:	stopAlarm.o cgic.o cJSON.o httpCurlMethod.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS} -o $@ stopAlarm.o cgic.o cJSON.o httpCurlMethod.o apiComWithRFDaemon.o ${LIBS} -lm -lcurl
-		cp StopAlarm.cgi /home/mac/nfs_share/yanlyFolder/Upload/
+#		cp StopAlarm.cgi /home/mac/nfs_share/yanlyFolder/Upload/
 		
 GetSwVersion.cgi:	getSwVersion.o cgic.o cJSON.o
 		${CC} ${CFLAGS}	-o $@ getSwVersion.o cgic.o cJSON.o ${LIBS} -lm 
-		cp GetSwVersion.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/		
+#		cp GetSwVersion.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/		
 GetHwVersion.cgi:	getHwVersion.o cgic.o cJSON.o
 		${CC} ${CFLAGS} -o $@ getHwVersion.o cgic.o cJSON.o ${LIBS} -lm 
-		cp GetHwVersion.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/		
+#		cp GetHwVersion.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/		
 DoUpdate.cgi:	doUpdate.o cgic.o cJSON.o glCalkProtocol.o
 		${CC} ${CFLAGS} -o $@ doUpdate.o cgic.o cJSON.o glCalkProtocol.o ${LIBS} -lm 
-		cp DoUpdate.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/	
+#		cp DoUpdate.cgi /home/mac/nfs_share/yanlyFolder/remoteupdate/	
 AllIasWarningDeviceOperation.cgi:	AllIasWarningDeviceOperation.o cgic.o cJSON.o httpCurlMethod.o
 		${CC} ${CFLAGS} -o $@ AllIasWarningDeviceOperation.o cgic.o cJSON.o httpCurlMethod.o ${LIBS} -lm -lcurl
-		cp AllIasWarningDeviceOperation.cgi /home/mac/nfs_share/yanlyFolder/Upload/	
+#		cp AllIasWarningDeviceOperation.cgi /home/mac/nfs_share/yanlyFolder/Upload/	
 ##############################################################################################   //RF relevant
 GetRFDevList.cgi:	getRFDevList.o cgic.o cJSON.o
 		${CC} ${CFLAGS}	-o $@ getRFDevList.o cgic.o cJSON.o ${LIBS} -lm 
-		cp GetRFDevList.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp GetRFDevList.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ChangeRFDevName.cgi:	changeRFDevName.o cgic.o cJSON.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS}	-o $@ changeRFDevName.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
-		cp ChangeRFDevName.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp ChangeRFDevName.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ChangeRFDevArmState.cgi:	changeRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS}	-o $@ changeRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
-		cp ChangeRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp ChangeRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
 RFWarningDevOperation.cgi:	RFWarningDevOperation.o cgic.o cJSON.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS}	-o $@ RFWarningDevOperation.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
-		cp RFWarningDevOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp RFWarningDevOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ChangeRFDevActivationState.cgi:	changeRFDevActivationState.o cgic.o cJSON.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS}	-o $@ changeRFDevActivationState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
-		cp ChangeRFDevActivationState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp ChangeRFDevActivationState.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ChangeAllRFDevArmState.cgi:	changeAllRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS}	-o $@ changeAllRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
-		cp ChangeAllRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp ChangeAllRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ##############################################################################################   //business relevant
 GetAuthState.cgi:	getAuthState.o cgic.o cJSON.o
 		${CC} ${CFLAGS}	-o $@ getAuthState.o cgic.o cJSON.o ${LIBS} -lm 
-		cp GetAuthState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp GetAuthState.cgi /home/mac/nfs_share/yanlyFolder/rf/
 SetAllPermitJoinOnByIoControl.cgi:	setAllPermitJoinOnByIoControl.o cgic.o
 		${CC} ${CFLAGS}	-o $@ setAllPermitJoinOnByIoControl.o cgic.o ${LIBS}
-		cp SetAllPermitJoinOnByIoControl.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp SetAllPermitJoinOnByIoControl.cgi /home/mac/nfs_share/yanlyFolder/rf/
 GatewaySettingOperation.cgi:	gatewaySettingOperation.o cgic.o cJSON.o glCalkProtocol.o myfile_operation.o httpCurlMethod.o
 		${CC} ${CFLAGS}	-o $@ gatewaySettingOperation.o cgic.o cJSON.o glCalkProtocol.o myfile_operation.o httpCurlMethod.o ${LIBS} -lm -lcurl
-		cp GatewaySettingOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/		
+#		cp GatewaySettingOperation.cgi /home/mac/nfs_share/yanlyFolder/rf/		
 DeleteSmartRuleByDeviceID.cgi:	deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o
 		${CC} ${CFLAGS} -o $@ deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o ${LIBS} -lm -lsqlite3
-		cp DeleteSmartRuleByDeviceID.cgi /home/mac/nfs_share/yanlyFolder/rf/
+#		cp DeleteSmartRuleByDeviceID.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ########################################test################################################
 #timerActionLoop:	timerActionLoop.o
 #		${CC} ${CFLAGS} -o $@ timerActionLoop.o

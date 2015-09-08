@@ -20,6 +20,7 @@
 #include <linux/if.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include "gatewayHwControl.h"
 
 #define ETHTOOL_GLINK        0x0000000A
 #define SIOCETHTOOL          0x00008946
@@ -73,7 +74,8 @@ int main()
             }
             else if (last == CONNECT)   // 如果断开了网线
             {
-                system("echo none > /sys/class/leds/14/trigger");
+                //system("echo none > /sys/class/leds/14/trigger");
+            	system(SET_DARK_CLOUD);
                 system("killall gdgl_channel");
                 last = UNCONNECT;       // 状态改为已断开
             }

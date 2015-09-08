@@ -71,9 +71,9 @@ pid_t invoke_by_datatype_fork(int datatype, const char *para)
 	}
 
 	if(para!=NULL)
-		snprintf(cmd, sizeof(cmd)+1, "%s %d %s", EXEC_PROGRAM_PATH, datatype, para);
+		snprintf(cmd, sizeof(cmd), "%s %d %s", EXEC_PROGRAM_PATH, datatype, para);
 	else
-		snprintf(cmd, sizeof(cmd)+1, "%s %d", EXEC_PROGRAM_PATH, datatype);
+		snprintf(cmd, sizeof(cmd), "%s %d", EXEC_PROGRAM_PATH, datatype);
 
 	GDGL_DEBUG("systerm cmd:%s\n", cmd);
 

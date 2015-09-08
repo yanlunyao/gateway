@@ -44,7 +44,7 @@ int main()
     fp = fopen(BIND_LIST_FILE, "r");
     if (fp == NULL)
     {
-        close(fp);
+//        close(fp);
         printf("%s\n", RT_Error);
         perror("open bind list error");
         return -1;

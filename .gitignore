@@ -42,3 +42,5 @@ unixdomain/
 *.cproject
 *.tar.gz
 /debug_yanly/
+/libunp_PC.a
+/Make.defines
