@@ -72,6 +72,7 @@ timed_action_notifier* timed_action_mainloop_threaded()
 
     notifier->epfd = epoll_create1(0);
     if (notifier->epfd < 0) {
+    	free(notifier);
         return NULL;
     }
 
