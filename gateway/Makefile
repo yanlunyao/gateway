@@ -8,7 +8,7 @@
 #联动相关cgi
 #按键和灯的功能模块, 通过io控制的方式允许zigbee设备入网
 #获取软件版本，获取硬件版本，执行升级网关的cgi，网关升级程序, 停止所有报警器报警的cgi， 大洋所有报警器操作的cgi
-#获取RF设备信息列表，修改RF设备名称，RF设备布撤防，开始/停止RF警号报警，RF设备启用/禁用配置，RF设备全部布防，全部撤防
+#通知网关房间被删除，获取房间号的设备信息，改变设备的房间号，获取RF设备信息列表，修改RF设备名称，RF设备布撤防，开始/停止RF警号报警，RF设备启用/禁用配置，RF设备全部布防，全部撤防
 #获取授权列表信息, 网关设置操作的cgi；
 #授权计费功能模块
 #允许所有入网，获取绑定列表，
@@ -24,7 +24,7 @@ PROGS =	bcast_daemon mcast_daemon init_smartgateway \
 		AddLinkage.cgi EditLinkage.cgi DelLinkage.cgi GetLinkageList.cgi EnableLinkage.cgi \
 		ui_daemon SetAllPermitJoinOnByIoControl.cgi \
 		GetSwVersion.cgi GetHwVersion.cgi DoUpdate.cgi DoUpdate StopAlarm.cgi AllIasWarningDeviceOperation.cgi \
-		GetRFDevList.cgi ChangeRFDevName.cgi ChangeRFDevArmState.cgi RFWarningDevOperation.cgi ChangeRFDevActivationState.cgi ChangeAllRFDevArmState.cgi \
+		NotifyRoomIdHasBeenDeleted.cgi GetRFDevByRoomId.cgi ModifyRFDevRoomId.cgi GetRFDevList.cgi ChangeRFDevName.cgi ChangeRFDevArmState.cgi RFWarningDevOperation.cgi ChangeRFDevActivationState.cgi ChangeAllRFDevArmState.cgi \
 		GetAuthState.cgi GatewaySettingOperation.cgi \
 		Auth_Daemon \
 #		SetAllPermitJoinOn.cgi GetAllBindList.cgi \
@@ -211,6 +211,15 @@ ChangeRFDevActivationState.cgi:	changeRFDevActivationState.o cgic.o cJSON.o apiC
 ChangeAllRFDevArmState.cgi:	changeAllRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o
 		${CC} ${CFLAGS}	-o $@ changeAllRFDevArmState.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
 #		cp ChangeAllRFDevArmState.cgi /home/mac/nfs_share/yanlyFolder/rf/
+ModifyRFDevRoomId.cgi:	modifyRFDevRoomId.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ modifyRFDevRoomId.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp ModifyRFDevRoomId.cgi /home/mac/nfs_share/yanlyFolder/rf/
+GetRFDevByRoomId.cgi:	getRFDevByRoomId.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ getRFDevByRoomId.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp GetRFDevByRoomId.cgi /home/mac/nfs_share/yanlyFolder/rf/
+NotifyRoomIdHasBeenDeleted.cgi:	notifyRoomIdHasBeenDeleted.o cgic.o cJSON.o apiComWithRFDaemon.o
+		${CC} ${CFLAGS}	-o $@ notifyRoomIdHasBeenDeleted.o cgic.o cJSON.o apiComWithRFDaemon.o ${LIBS} -lm 
+		cp NotifyRoomIdHasBeenDeleted.cgi /home/mac/nfs_share/yanlyFolder/rf/
 ##############################################################################################   //business relevant
 GetAuthState.cgi:	getAuthState.o cgic.o cJSON.o
 		${CC} ${CFLAGS}	-o $@ getAuthState.o cgic.o cJSON.o ${LIBS} -lm 
