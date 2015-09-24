@@ -268,6 +268,12 @@ cp_all_daemon:
 		cp Daemon_yanly${DATE}.tar.gz /media/sf_Share/bin/
 		cp ${ALL_DAEMON} ../gateway/bin/
 		cp Daemon_yanly${DATE}.tar.gz ../gateway/bin/
+tar_all_elf:
+		chmod 755 *
+		cp ${ALL_DAEMON} *.cgi ../gateway/bin/
+		tar -czvf ELF_yanly${DATE}.tar.gz *.cgi ${ALL_DAEMON}
+		cp ELF_yanly${DATE}.tar.gz ../gateway/bin/
+		cp ELF_yanly${DATE}.tar.gz /media/sf_Share/bin/
 cp_upload:
 		cp BaseDataUpload SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
 clean:
