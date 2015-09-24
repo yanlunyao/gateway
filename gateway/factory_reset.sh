@@ -29,5 +29,8 @@ echo "clear rf_dev.json"
 rm -rf /gl/etc/rf_dev.json
 echo "clear bind list"
 rm -rf /gl/etc/bindlist.json /gl/etc/binddev.json
-sync
 
+echo "reset setting files"
+cp -Rf /gl/etc/default/* /gl/etc/
+
+sync

@@ -30,5 +30,7 @@
 
 
 int communicateWithRF(const char *send_text, int send_size, char *respond);
+int communicateWithRFRes(const char *send_text, int send_size, char *respond);
+int communicateWithRFMallocRespond(const char *send_text, int send_size, char **respond);
 
 #endif /* GATEWAY_APICOMWITHRFDAEMON_H_ */
