@@ -233,7 +233,8 @@ GatewaySettingOperation.cgi:	gatewaySettingOperation.o cgic.o cJSON.o glCalkProt
 DeleteSmartRuleByDeviceID.cgi:	deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o
 		${CC} ${CFLAGS} -o $@ deleteSmartRuleByDeviceID.o cgic.o cJSON.o glCalkProtocol.o sqliteWrap.o sqliteOperator.o timingCommon.o ${LIBS} -lm -lsqlite3
 #		cp DeleteSmartRuleByDeviceID.cgi /home/mac/nfs_share/yanlyFolder/rf/
-
+loopcgi:	loopcgi.o cgic.o
+		${CC} ${CFLAGS} -o $@ loopcgi.o cgic.o ${LIBS}
 #rf_recv_test:	rf_recv_test.o
 #		${CC} ${CFLAGS} -o $@ rf_recv_test.o ${LIBS}
 #		cp rf_recv_test /home/mac/nfs_share/yanlyFolder/rf/

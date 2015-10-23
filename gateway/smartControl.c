@@ -75,6 +75,7 @@ static void parse_json_callback(const char *text);
 
 //设备被删除后触发的数据库操作
 int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee);
+int del_ipcid_trigger_del_linkage_rule(int ipc_id);
 
 //定时操作相关
 void app5s_task(void *arg);
@@ -422,6 +423,44 @@ static void parse_json_callback(const char *text)
     	    }
     	    mainid = json_temp->valueint;					//解析mainid
     	    switch (mainid) {
+    	    	case MAINID_IPC:
+    	    		json_temp = cJSON_GetObjectItem(root, FIELD_SUBID);
+    	    	    if (!json_temp)
+    	    	    {
+    	    	    	GDGL_DEBUG("json parse error\n");
+    	    	    	cJSON_Delete(root);
+    	    	    	return;
+    	    	    }
+    	    	    subid = json_temp->valueint;
+    	    	    switch(subid) {
+    	    	    	case SUBID_IPC_BE_DELETED:
+    	    		    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有广联定时都有status字段才可以这样做
+    	    				if (!json_temp)
+    	    				{
+    	    					GDGL_DEBUG("json parse error\n");
+    	    					cJSON_Delete(root);
+    	    					return;
+    	    				}
+    	    				status = json_temp->valueint;
+    	    				if(status <0) {
+    	    	    	    	GDGL_DEBUG("json status invaild\n");
+    	    	    	    	cJSON_Delete(root);
+    	    	    	    	return;
+    	    				}
+    	    	    		json_temp = cJSON_GetObjectItem(root, "id");
+    						if (!json_temp)
+    						{
+    							GDGL_DEBUG("json parse error\n");
+    							cJSON_Delete(root);
+    							return;
+    						}
+    	        	    	id_value = json_temp->valueint;	//this is ipc id
+    	        	    	printf("[ipc id be deleted] id = %d\n", id_value);
+    	        	    	del_ipcid_trigger_del_linkage_rule(id_value);
+    	    	    	break;
+    	    	    	default:break;
+    	    	    }
+    	    	break;
     	    	case MAINID_TIMEACTION:
     		    	json_temp = cJSON_GetObjectItem(root, FIELD_STATUS); //解析status，默认所有广联定时都有status字段才可以这样做
     				if (!json_temp)
@@ -743,6 +782,7 @@ static void parse_json_callback(const char *text)
 						case SUBID_RF_ACTIVATE_STATE_CHGE:
 						break;
 						case SUBID_RF_LIST_CHGE:
+							printf("[baseDataUpload] rf list change\n");
 							invoke_by_datatype_fork(GET_RF_LIST_NUM, NULL);
 						break;
 						default: break;
@@ -1243,6 +1283,45 @@ int del_dev_trigger_del_relevant_rule(const char *isdeleted_ieee)
 		}
 	}
 	memset(will_del_id, 0, DEL_ID_MAX);
+	//判断是否在联动规则里
+	if(del_linkage_by_isdeletedieee(will_del_id, isdeleted_ieee) >0) {
+		for(i=0; i<DEL_ID_MAX; i++) {
+			if(will_del_id[i] == 0)
+				break;
+			//GDGL_DEBUG("will del lid:%d\n",will_del_id[i]);
+			printf("[devBeDeleted] -lid=%d\n",will_del_id[i]);
+			if((send_cb_len = cJsonLinkage_callback(send_cb_string, SUBID_DEL_LINK, 1, will_del_id[i], NULL)) >=0) {
+				push_to_CBDaemon(send_cb_string, send_cb_len);
+				usleep(300000); //300ms //发送太快调试工具接收不到
+				//GDGL_DEBUG("send linkage success\n");
+			}
+		}
+	}
+	//GDGL_DEBUG("over\n");
+	exit(0);
+	return 0;
+}
+int del_ipcid_trigger_del_linkage_rule(int ipc_id)
+{
+	int will_del_id[DEL_ID_MAX] = {0};
+	char send_cb_string[GL_CALLBACK_MAX_SIZE];
+	int send_cb_len;
+	int i;
+
+	pid_t	pid;
+	if ((pid = fork()) > 0) {
+		waitpid(-1,NULL,0);
+		return(pid);		//parent process
+	}
+	if ((pid = fork()) > 0) {
+		exit(0);			//child process
+		return (pid);
+	}
+
+	char isdeleted_ieee[IEEE_LEN] = {0};
+	snprintf(isdeleted_ieee, IEEE_LEN, "%d", ipc_id);
+	//printf("ipc id is %s\n", isdeleted_ieee);
+							//grandson process
 	//判断是否在联动规则里
 	if(del_linkage_by_isdeletedieee(will_del_id, isdeleted_ieee) >0) {
 		for(i=0; i<DEL_ID_MAX; i++) {

@@ -18,6 +18,9 @@
 //#include "smartgateway.h"
 
 //#define NO_CALLBAK_DEBUG
+#include <time.h>
+
+#define SCENE_DEBUG(fmt, args...)	fprintf( fopen("/gl/log/api.log","a+"), "%s(%d)[%s]: " fmt, __FILE__, __LINE__, __func__, ## args)
 
 //extern
 extern scene_action_stPtr scnaction_st_gener_malloc(const char *text);
@@ -69,6 +72,8 @@ int cgiMain()
 	int res;
 
 	cgiHeaderContentType("application/json"); //MIME
+	char *ipaddr = getenv("REMOTE_ADDR");
+	SCENE_DEBUG("remote ip=%s\n",ipaddr);
 
 	//read name
 	cgi_re = cgiFormString("scnname", scene_base.scnname, NAME_STRING_LEN + 1);
@@ -117,6 +122,7 @@ all_over:
 #else
 	if((send_cb_len = cJsonScene_callback(send_cb_string, &scene_base, NULL, NULL, 2, res)) >=0) {
 		push_to_CBDaemon(send_cb_string, send_cb_len);
+		SCENE_DEBUG("[time]=%ld,callback=%s\n", time(NULL), send_cb_string);
 	}
 #endif
     if(scene_action){
