@@ -1,0 +1,39 @@
+created by yanly
+===============
+
+说明
+===============
+该目录下文件为智能家居网关项目部分模块和CGI程序的代码，基础网络功能引用了代码库‘unpv13e’。
+
+使用
+===============
+在此目录下执行下面的命令:
+	make	# 编译所有的模块程序及CGI程序
+	make cp_application_api # 拷贝生成的可执行文件到指定目录，bin文件目录： ../gateway/bin/， win7主机共享目录： /media/sf_Share/bin/
+	make cp_all_daemon 
+	make tar_all_elf
+	
+使用git作为版本控制工具，命令行执行：
+	git	log		# 查看日志
+	git status 	   #查看状态
+	...		# 其它使用方法不列出
+	
+git图形界面工具，使用smartgit客户端，命令行执行： smartgit，注意用户权限。
+注：'dev'是开发分支，'master'是发布分支，一般在'dev'上开发调试，等到正式发布新版本的时候将'dev'分支合并到'master'分支。
+
+模块及CGI程序
+===============
+CGI程序太多暂不列出，见文档《广联API》
+bcast_daemon： 广播模块
+mcast_daemon： 旧的广播模块，现在程序不用
+init_smartgateway： 网关初始化模块	 
+cloudProxyHttpModule： 云代理执行http模块
+clientadmin_daemon： 用户管理模块 
+SmartControl： 智能控制功能模块，实现场景联动定时功能及其它解析CALLBAK触发智能控制功能
+BaseDataUpload： 基础数据上传模块
+ui_daemon： 按键和灯控制功能模块, 按键允许zigbee设备入网，按键消警，按键恢复出厂设置
+DoUpdate： 网关升级程序
+Auth_Daemon： 授权计费功能模块
+net_stat： 网络状态检测
+bind_daemon： 绑定模块
+
