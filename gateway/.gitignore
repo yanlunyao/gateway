@@ -54,3 +54,5 @@ clientadmin_daemon
 /gateway_test.sh
 /rf_recv_test.c
 /rf_recv_test
+/loopcgi
+*.c
