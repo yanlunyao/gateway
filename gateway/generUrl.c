@@ -219,7 +219,10 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			p2 = p1+ strlen(p1) +1; //how many ipc picture want to capture
 			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
 					"IPCCapture.cgi?ipc_id=%s&num=%s", p1, p2);
-			memset(actobj, 0, IEEE_LEN+1);
+			//memset(actobj, 0, IEEE_LEN+1);
+//			printf("p1=%s\n", p1);
+			snprintf(actobj, IEEE_LEN+1, p1);
+//			printf("actobj=%s\n", actobj);
 			break;
 #ifdef USE_RF_FUNCTION
 		case RF_DEV_BYPASS_ACT_TYPE:													//参数3个
@@ -245,7 +248,8 @@ int gnerate_url_string(int type, const char* para, char para_cnt, char *url, cha
 			p2 = p1+ strlen(p1) +1; //the ipc video record time
 			nwrite = snprintf(url, URL_STRING_LEN, "/cgi-bin/rest/network/"
 					"IPCRecord.cgi?ipc_id=%s&duration=%s", p1, p2);
-			memset(actobj, 0, IEEE_LEN+1);
+			//memset(actobj, 0, IEEE_LEN+1);
+			snprintf(actobj, IEEE_LEN+1, p1);
 		break;
 		default:
 			return URL_PARA_TYPE_ERROR;
