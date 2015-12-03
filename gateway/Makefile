@@ -261,20 +261,26 @@ cp_application_api:
 		cp *.cgi /home/mac/nfs_share/yanlyFolder/API/
 		tar -czvf API_yanly${DATE}.tar.gz *.cgi
 		cp API_yanly${DATE}.tar.gz /media/sf_Share/bin/
-		cp *.cgi ../gateway/bin/
-		cp API_yanly${DATE}.tar.gz ../gateway/bin/
+		cp *.cgi ../gateway/bin/api_files/
+		mv API_yanly${DATE}.tar.gz ../gateway/bin/api_files/
 cp_all_daemon:
 		cp ${ALL_DAEMON} /home/mac/nfs_share/yanlyFolder/all_daemon/
 		tar -czvf Daemon_yanly${DATE}.tar.gz ${ALL_DAEMON}
 		cp Daemon_yanly${DATE}.tar.gz /media/sf_Share/bin/
 		cp ${ALL_DAEMON} ../gateway/bin/
-		cp Daemon_yanly${DATE}.tar.gz ../gateway/bin/
+		mv Daemon_yanly${DATE}.tar.gz ../gateway/bin/
 tar_all_elf:
 		chmod 755 *
-		cp ${ALL_DAEMON} *.cgi ../gateway/bin/
-		tar -czvf ELF_yanly${DATE}.tar.gz *.cgi ${ALL_DAEMON}
+		cp ${ALL_DAEMON}  ../gateway/bin/
+		cp *.cgi ../gateway/bin/api_files/
+		tar -czvf API_yanly${DATE}.tar.gz *.cgi
+		tar -czvf Daemon_yanly${DATE}.tar.gz ${ALL_DAEMON}
+		tar -czvf ELF_yanly${DATE}.tar.gz API_yanly${DATE}.tar.gz Daemon_yanly${DATE}.tar.gz
 		cp ELF_yanly${DATE}.tar.gz ../gateway/bin/
-		cp ELF_yanly${DATE}.tar.gz /media/sf_Share/bin/
+		mv ELF_yanly${DATE}.tar.gz /media/sf_Share/bin/
+tar_source_code:
+		tar -czvf unpv13e${DATE}.tar.gz ../../unpv13e/
+		mv unpv13e${DATE}.tar.gz /media/sf_Share/bin/code/
 cp_upload:
 		cp BaseDataUpload SmartControl /home/mac/nfs_share/yanlyFolder/Upload/
 clean:
