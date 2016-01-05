@@ -172,17 +172,18 @@ static int http_make_all_bypass(int scene_id)
     // 调用getendpoint.cgi，并获取返回结果
 
     int socket_fd;
-    int len;
     struct sockaddr_in remote_addr;
+#ifdef USE_ZIGBEE_FUNCTION
+    int len;
     char buf[BUF_SIZE] = {0};
     char* recv_data = NULL;
     int recv_data_size = 0;
-
+#endif
     memset(&remote_addr, 0, sizeof(remote_addr));
     remote_addr.sin_family = AF_INET;
     remote_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     remote_addr.sin_port = htons(80);
-
+#ifdef USE_ZIGBEE_FUNCTION
     if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)
     {
         close(socket_fd);
@@ -353,6 +354,7 @@ static int http_make_all_bypass(int scene_id)
         send(socket_fd, request, strlen(request), 0);
         close(socket_fd);
     }
+#endif
     //=========================================================================
     //调用API设置全局布撤防状态
     if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) >0){
@@ -381,6 +383,8 @@ static int http_make_all_bypass(int scene_id)
     }
 	close(socket_fd);
 
+#ifdef USE_ZIGBEE_FUNCTION
     cJSON_Delete(json_recv);
+#endif
     return res;
 }

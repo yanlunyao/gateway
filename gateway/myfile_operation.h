@@ -16,8 +16,17 @@
 #define FILE_WRITE_DATA_FAILED					-4
 
 
-
+/*
+ * description: 加锁读取文件内的所有内容。
+ * in： path--文件名（包含路径），data--获取到的数据存放区
+ * out：	0--success，<0--failed
+ * */
 int read_lock_file_data(const char *path, char *data);
+/*
+ * description: 加锁，清空文件内容后写新的内容进文件。
+ * in： path--文件名（包含路径），data--待写的数据存放区
+ * out：	0--success，<0--failed
+ * */
 int write_lock_file_data(const char *path, const char *data);
 
 #endif /* GATEWAY_MYFILE_OPERATION_H_ */

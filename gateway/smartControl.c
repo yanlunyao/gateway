@@ -10,6 +10,7 @@
  *  Version     : V01-00
  *  History     : <author>		<time>		<version>		<desc>
  *  			  yanly		    150806		V01-01			增加RF设备相关逻辑：支持联动，RF设备列表更新时上传服务器
+ *  			  yanly			151228		SmartControl-NOZIGBEE-V01-00			屏蔽Zigbee功能
  */
 
 
@@ -29,9 +30,9 @@
 #include <curl/curl.h>
 #include "zigbeeDeviceInfo.h"
 
-#define  PROJECT_VERSION			"SmartControl-V02-00"
-#define  APP_NAME					"SmartControl"
-#define  APP_VERSION				"V02-00"
+#define  PROJECT_VERSION			"SmartControl-NOZIGBEE-V01-00"
+#define  APP_NAME					"SmartControl-NOZIGBEE"
+#define  APP_VERSION				"V01-00"
 
 #define  CB_HEART_BEAT_TIME			30   //30s
 #define  TIMEOUT_UNIT				5	 //(5s/unit)
@@ -101,7 +102,9 @@ int main()
 {
 	pthread_t timeloop_thread_id;
 	timed_action_t *time_action_cb;
+#ifdef USE_ZIGBEE_FUNCTION
 	timed_action_t *ta_enroll_check;
+#endif
 	printf("===============%s version[%s], COMPILE_TIME[%s: %s]\n", APP_NAME, APP_VERSION, __DATE__, __TIME__);
 //	printf("---------%s---------\n", PROJECT_VERSION);
 	printf("------------------------------------------------\n");
@@ -119,8 +122,9 @@ int main()
 	if(http_get_warningduration(&tempvalue) ==0) {
 		setting_warningduration(tempvalue);
 	}
+#ifdef USE_ZIGBEE_FUNCTION
 	ta_enroll_check = timed_action_schedule_periodic(notifier, TIMEOUT_UNIT, 0, &app5s_task, NULL); //5s task
-
+#endif
 	//读数据库启用的定时规则信息，保存到列表
 	if(time_action_get_enable_list(list_time) <0) {
 		//读表出错，程序退出
@@ -337,13 +341,16 @@ static void read_callback_data_handle(int confd)
 static void parse_json_callback(const char *text)
 {
 	cJSON *root;
-	cJSON *json_temp,*json_temp2;
+	cJSON *json_temp;
 	int msgtype, mainid, subid,status, id_value, enable,w_mode;
-	zigbee_wmode zgwmode;
 	rf_wmode rfwmode;
 	char *dev_ieee, *dev_ep, *attrname, *warntime;
 	int attr_value;
+#ifdef USE_ZIGBEE_FUNCTION
+	cJSON *json_temp2;
+	zigbee_wmode zgwmode;
 	int alarm1,alarm2;
+#endif
 	char audio_play_string[100]={0};
 
 	//判断需不需要分包的标记
@@ -652,8 +659,9 @@ static void parse_json_callback(const char *text)
 						default:break;
 					}
     	    	break;
-    	    	case MAINID_RF:
+/***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***/
 #ifdef USE_RF_FUNCTION
+    	    	case MAINID_RF:
 					json_temp = cJSON_GetObjectItem(root, FIELD_SUBID);
 					if(!json_temp) {
 						GDGL_DEBUG("json parse error\n");
@@ -765,11 +773,13 @@ static void parse_json_callback(const char *text)
 							rfwmode = w_mode;
 							//所有大洋报警器播放门铃声
 							if(rfwmode == rfDoorOpen) {
+#ifdef USE_ZIGBEE_FUNCTION
 								char doorbellapi[300] = {0};
 								snprintf(doorbellapi, sizeof(doorbellapi), "GET /cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=%d&param2=0&param3=0&operatortype=4 "
 										"HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n", MUSIC_SHORT_DURATION);
 //								printf("%s\n", doorbellapi);
 								http_get_method_by_socket(doorbellapi);
+#endif
 								//播放网关声音
 								snprintf(audio_play_string, sizeof(audio_play_string), "mplayer -loop 0 /gl/res/%s", alarm_music_name[8]);
 								gateway_warning_operation(audio_play_string, MUSIC_SHORT_DURATION);
@@ -789,6 +799,7 @@ static void parse_json_callback(const char *text)
 					}
     	    	break;
 #endif
+/***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***RF***/
     	    	case MAIND_GATEWAY_SETTING:
 					json_temp = cJSON_GetObjectItem(root, FIELD_SUBID);
 					if(!json_temp) {
@@ -814,6 +825,8 @@ static void parse_json_callback(const char *text)
     	    	default:break;
     	    }
     	break;
+#ifdef USE_ZIGBEE_FUNCTION	//大洋Zigbee
+/***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***/
     	case DEV_ATTRIBUTE_MSGTYPE:
 			json_temp = cJSON_GetObjectItem(root, "deviceIeee");
 			if (!json_temp)
@@ -1070,6 +1083,8 @@ static void parse_json_callback(const char *text)
     		dev_unenroll_timeout = INVALID_TIMEOUT;
     		dev_unenroll_flag =1;
     	break;
+#endif
+/***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***Zigbee***/
     	default:break;
     }
 	cJSON_Delete(root);
@@ -1166,6 +1181,7 @@ static void list_time_printf_tid()
 	}
 	printf("~~~~~~~~~~~~~~~~~~~~~~~~\n");
 }
+#ifdef USE_ZIGBEE_FUNCTION
 void app5s_task(void *arg)
 {
 //	if(new_add_dev_flag ==1) {
@@ -1196,6 +1212,7 @@ void app5s_task(void *arg)
 		}
 	}
 }
+#endif
 void stop_music_callback(void *arg)
 {
 	system("killall mplayer");

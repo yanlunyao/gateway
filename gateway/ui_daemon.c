@@ -292,10 +292,12 @@ int main()
         //rst键，按一下实现入网功能
 		if (key == KEY_RST && key_state == KEY_STAT_RELEASE)
 		{
+#ifdef USE_ZIGBEE_FUNCTION
 			printf("set SetAllPermitJoinOnByIoControl\n");
 			system(SETIO_L);
 			sleep(1);
 			system(SETIO_H);
+#endif
 //
 //
 //			if ((socket_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0)

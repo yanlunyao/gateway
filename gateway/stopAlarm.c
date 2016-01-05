@@ -6,6 +6,7 @@
  *  Version     : V01-00
  *  History     : <author>		<time>		<version>		<desc>
  *  				yanly		150806		V01-01		    增加停止所有RF警号报警
+ *  				yanly		151228		V02-01			屏蔽Zigbee功能
  *
  */
 
@@ -33,15 +34,19 @@ static void api_response(int res)
 }
 
 //const char getzbnode[]= "http://127.0.0.1/cgi-bin/rest/network/getZBNode.cgi?callback=1234&encodemethod=NONE&sign=AAA";
+#ifdef USE_ZIGBEE_FUNCTION
 const char stopZigbeeWarning[]= "http://127.0.0.1/cgi-bin/rest/network/AllIasWarningDeviceOperation.cgi?param1=0&param2=0&param3=0&operatortype=0";
+#endif
 const char stopAllRFWarning[] = "{\n	\"api\": \"RFWarningDevOperation\",\n	\"rfid\": \"\",\n	\"operatortype\": 2,\n	\"param1\": 0\n}";
 //{\n	\"api\": \"RFWarningDevOperation\",\n	\"rfid\": \"%s\",\n	\"operatortype\": %d,\n	\"param1\": %d\n}
 int cgiMain()
 {
 	int res=0;
+#ifdef USE_ZIGBEE_FUNCTION
 	int rt;
 	CURLcode rc;
 	char		result_str[MAX_RESULT] = {0};
+#endif
 //	char		response_json_str[MAX_RESULT] = {0};
 //	cJSON 		*response_json;
 
@@ -55,7 +60,7 @@ int cgiMain()
 	communicateWithRF(stopAllRFWarning, strlen(stopAllRFWarning)+1, NULL);
 	RF_DEBUG("%s\n", stopAllRFWarning);
 	#endif
-
+#ifdef USE_ZIGBEE_FUNCTION
 	//停止zigbee报警器报警:
 	rc = curl_global_init(CURL_GLOBAL_ALL);
 	if (rc != CURLE_OK) {
@@ -71,6 +76,7 @@ int cgiMain()
 		goto over;
 	}
 over:
+#endif
     api_response(res);
     curl_global_cleanup();
 	return 0;

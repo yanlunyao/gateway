@@ -17,6 +17,7 @@
 
 //function module  enabled
 #define USE_RF_FUNCTION
+//#define USE_ZIGBEE_FUNCTION
 
 #include "list.h"
 #define SMARTGATEWAY_DEBUG
